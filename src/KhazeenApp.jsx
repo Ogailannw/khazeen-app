@@ -2605,7 +2605,8 @@ export default function App() {
   return (
     <ThemeCtx.Provider value={t}>
       <AppCtx.Provider value={ctx}>
-        <div style={{ fontFamily }}>
+        <div style={{ fontFamily, maxWidth: "100vw", overflowX: "hidden" }}>
+          <style>{`*{box-sizing:border-box} html,body,#root{margin:0;max-width:100%;overflow-x:hidden}`}</style>
           {!entered ? <Splash appName={brand.appName} logo={brand.logo} onEnter={() => setEntered(true)} />
             : role ? <Shell role={role} dark={dark} setDark={setDark} brand={brand} setBrand={setBrand} license={license} allocatedCamp={allocatedCamp} userName={userName} onLogout={() => setRole(null)} />
             : <Login onLogin={setRole} appName={brand.appName} logo={brand.logo} />}
