@@ -9,7 +9,7 @@ import {
   ThumbsUp, ThumbsDown, Warehouse, PackagePlus, Flag, Star, FileText,
   ClipboardList, Link2, Settings, ScanSearch, Compass, UserCircle, Upload,
   Image, Pin, Camera, Clock, Phone, Mail,
-  Smartphone, CreditCard, ShieldCheck, StickyNote, BellOff, Stethoscope, RotateCcw, HeartPulse, Share2, Download, User, Eye, EyeOff, MessageCircle,
+  Smartphone, CreditCard, ShieldCheck, StickyNote, BellOff, Stethoscope, RotateCcw, HeartPulse, Share2, Download, User, Eye, EyeOff, MessageCircle, Menu,
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -22,7 +22,19 @@ const BASE = {
   dark: { bg: "#0A1726", surface: "#122339", surfaceAlt: "#0E1D30", head: "#0A1828", border: "#22405E", text: "#E9F1FA", textMuted: "#94AAC4", primary: "#4D9DE8", primarySoft: "#143352", accent: "#2FC0BE", gold: "#D4B254", goldSoft: "#2A2310", sidebar: "#0A1828", sidebarText: "#94AAC4", sidebarActive: "#D4B254", danger: "#EC7A70", dangerSoft: "#2C1816", warning: "#E6AC52", warningSoft: "#2C2314", success: "#62C988", successSoft: "#14271B", cold: "#62B2E8", coldSoft: "#132A40", purple: "#B196DD", purpleSoft: "#1E1733", zebra: "#0E1D30", input: "#0E1D30", chartGrid: "#1E3A58" },
 };
 const FONTS = { Inter: "'Inter', system-ui, sans-serif", System: "system-ui, 'Segoe UI', sans-serif", Serif: "Georgia, 'Times New Roman', serif", Mono: "ui-monospace, monospace" };
-const SCRIPT = "'Segoe Script', 'Brush Script MT', 'Comic Sans MS', cursive";
+const SCRIPT = "'Shadows Into Light', 'Segoe Script', 'Comic Sans MS', cursive";
+// Khazeen wordmark with a serif ℞ tucked above the K, like a prescription pad.
+// fontSize controls overall size; inner pieces use em so it scales cleanly (incl. clamp()).
+function Wordmark({ size = 54, color = "#fff", gold = "#C9A23F", rx = "#fff", reg = 0.34 }) {
+  return (<span style={{ display: "inline-flex", alignItems: "flex-start", fontFamily: SCRIPT, fontWeight: 400, fontSize: size, color, lineHeight: 1, whiteSpace: "nowrap" }}>
+    <span style={{ position: "relative", display: "inline-block" }}>
+      <span style={{ position: "absolute", top: "-0.42em", left: "-0.04em", fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: "italic", fontWeight: 700, fontSize: "0.5em", color: rx, lineHeight: 1, pointerEvents: "none" }}>&#8478;</span>
+      K
+    </span>
+    <span>hazeen</span>
+    <sup style={{ fontSize: `${reg}em`, fontFamily: "system-ui", color: gold, marginTop: "0.08em" }}>&reg;</sup>
+  </span>);
+}
 const DEFAULT_BRAND = { appName: "Khazeen", primary: "", accent: "", font: "Inter", cpdLink: "https://accreditation.moph.gov.qa", logo: "💊", density: "Comfortable" };
 
 const ThemeCtx = createContext(); const useT = () => useContext(ThemeCtx);
@@ -269,7 +281,7 @@ function Splash({ appName, logo, onEnter }) {
     <div style={{ position: "absolute", top: -40, left: "50%", transform: "translateX(-50%)", width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle, rgba(200,162,75,0.16), transparent 70%)", pointerEvents: "none" }} />
     <div style={{ width: 660, maxWidth: "100%", textAlign: "center", position: "relative" }}>
       <div style={{ width: 88, height: 88, borderRadius: "50%", background: "#0E2A4A", border: `2px solid ${GOLD}`, display: "grid", placeItems: "center", margin: "0 auto 16px", boxShadow: "0 0 0 8px rgba(200,162,75,0.06), 0 12px 36px rgba(0,0,0,0.45)", overflow: "hidden", fontSize: 40 }}>{logo && logo.startsWith("blob:") ? <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (logo || "💊")}</div>
-      <h1 style={{ margin: 0, fontSize: 54, fontWeight: 400, fontFamily: SCRIPT, color: "#fff", lineHeight: 1 }}>{appName}<sup style={{ fontSize: 18, fontFamily: "system-ui", color: GOLD }}>®</sup></h1>
+      <h1 style={{ margin: 0, lineHeight: 1, fontSize: "clamp(34px, 11vw, 52px)" }}><Wordmark size="1em" color="#fff" gold={GOLD} /></h1>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, marginTop: 9 }}>
         <span style={{ height: 1, width: 46, background: `linear-gradient(90deg, transparent, ${GOLD})` }} />
         <p style={{ fontSize: 11.5, color: GOLD, letterSpacing: 2.5, margin: 0 }}>MINISTRY OF DEFENCE · QATAR</p>
@@ -308,7 +320,7 @@ function Login({ onLogin, appName, logo }) {
     <div style={{ width: 940, maxWidth: "100%" }}>
       <div style={{ textAlign: "center", marginBottom: 30 }}>
         <div style={{ width: 84, height: 84, borderRadius: "50%", background: NAVY2, border: `2px solid ${GOLD}`, display: "grid", placeItems: "center", margin: "0 auto 16px", boxShadow: "0 8px 30px rgba(0,0,0,0.35)", overflow: "hidden", fontSize: 40 }}>{logo && logo.startsWith("blob:") ? <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (logo || "💊")}</div>
-        <h1 style={{ margin: 0, fontSize: 46, fontWeight: 400, fontFamily: SCRIPT, color: "#fff" }}>{appName}<sup style={{ fontSize: 17, fontFamily: "system-ui", color: GOLD }}>®</sup></h1>
+        <h1 style={{ margin: 0, lineHeight: 1, fontSize: "clamp(30px, 9vw, 46px)" }}><Wordmark size="1em" color="#fff" gold={GOLD} /></h1>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 8 }}>
           <span style={{ height: 1, width: 40, background: `linear-gradient(90deg, transparent, ${GOLD})` }} />
           <p style={{ fontSize: 11.5, color: GOLD, letterSpacing: 1.5, margin: 0 }}>MINISTRY OF DEFENCE · QATAR</p>
@@ -557,7 +569,7 @@ function AdminDashboard() {
       <Metric label="Fulfillment rate" value={`${Math.round((done.length / items.length) * 100)}%`} tone="primary" info="Share of admin requests completed." />
       <Metric label="Comments" value={comments.length} tone="accent" />
     </div>
-    <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
       <div style={card(t)}>
         <p style={{ ...ttl(t), marginBottom: 12 }}><ClipboardCheck size={17} color={t.primary} /> Request fulfillment</p>
         <div style={{ display: "grid", gap: 10 }}>{items.map((r) => { const c = kc(r.kind); const isOpen = r.status === "open";
@@ -601,7 +613,7 @@ function Dashboard({ role, allocatedCamp }) {
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginBottom: 16 }}>
       {kpis.map((k) => (<div key={k.label} style={card(t)}><div style={{ fontSize: 13, color: t.textMuted, fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>{k.label} <InfoDot text={k.info} /></div><div style={{ fontSize: 30, fontWeight: 700, margin: "6px 0 2px", color: { primary: t.primary, accent: t.accent, warning: t.warning, danger: t.danger }[k.tone] }}>{k.value}</div></div>))}
     </div>
-    <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 16 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
       <div style={card(t)}><p style={ttl(t)}><Building2 size={17} color={t.primary} /> Stock by camp</p>
         <div style={{ height: 230, marginTop: 12 }}><ResponsiveContainer width="100%" height="100%"><BarChart data={stockData} barGap={4}><CartesianGrid strokeDasharray="3 3" stroke={t.chartGrid} vertical={false} /><XAxis dataKey="camp" tick={{ fill: t.textMuted, fontSize: 12 }} axisLine={false} tickLine={false} /><YAxis tick={{ fill: t.textMuted, fontSize: 12 }} axisLine={false} tickLine={false} /><Tooltip contentStyle={tip} /><Legend wrapperStyle={{ fontSize: 12 }} /><Bar dataKey="inStock" name="In stock" fill={t.primary} radius={[5, 5, 0, 0]} /><Bar dataKey="low" name="Low" fill={t.warning} radius={[5, 5, 0, 0]} /></BarChart></ResponsiveContainer></div></div>
       <div style={card(t)}><p style={ttl(t)}><FileBarChart size={17} color={t.accent} /> Dispensing vs last year</p>
@@ -2382,7 +2394,7 @@ function Home({ role, userName, license }) {
   const showCockpit = !isMedical && role !== "Inspector";
   return (<Page title="Home" subtitle="Your space.">
     {/* header: greeting + today's reminder, full width, above the cockpit */}
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: 16, alignItems: "stretch", marginBottom: 18 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, alignItems: "stretch", marginBottom: 18 }}>
       <div style={card(t)}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ width: 76, height: 76, borderRadius: "50%", background: t.surfaceAlt, display: "grid", placeItems: "center", fontSize: 34, position: "relative", overflow: "hidden", flexShrink: 0 }}>
@@ -2404,7 +2416,7 @@ function Home({ role, userName, license }) {
       </div>
     </div>
     {showCockpit && <ExpiryCockpit role={role} />}
-    <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16, alignItems: "start" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, alignItems: "start" }}>
       <div style={{ display: "grid", gap: 16 }}>
         {license && (() => { const lic = licenseLevel(license.expiry); return lic ? <div style={{ ...card(t), display: "flex", alignItems: "center", gap: 10, borderColor: t.warning + "55" }}><Award size={18} color={t.warning} /><span style={{ fontSize: 13 }}>License {lic.txt} — open CPD to plan renewal.</span></div> : null; })()}
       </div>
@@ -2468,6 +2480,10 @@ function Profile({ role, allocatedCamp, license }) {
 /* ================= SHELL ================= */
 function Shell({ role, dark, setDark, brand, setBrand, license, allocatedCamp, userName, onLogout }) {
   const t = useT(); const { notify, notifs } = useApp(); const nav = NAV_BY_ROLE[role]; const [route, setRoute] = useState(nav[0]);
+  const [mobile, setMobile] = useState(typeof window !== "undefined" && window.innerWidth < 860);
+  const [drawer, setDrawer] = useState(false);
+  useEffect(() => { const onR = () => setMobile(window.innerWidth < 860); window.addEventListener("resize", onR); return () => window.removeEventListener("resize", onR); }, []);
+  const go = (r) => { setRoute(r); setDrawer(false); };
   const canPost = role === "Admin" || role === "Management" || role === "Sub-Manager";
   const canPin = role === "Admin" || role === "Management" || role === "Sub-Manager";
   const canEditStock = ["Admin", "Management", "Sub-Manager", "Pharmacist"].includes(role);
@@ -2505,31 +2521,33 @@ function Shell({ role, dark, setDark, brand, setBrand, license, allocatedCamp, u
     default: return <Hub canPost={canPost} canPin={canPin} canUnsendAny={canPin} emoji={ROLE[role].emoji} />;
   } };
   return (<div style={{ display: "flex", minHeight: "100vh", background: t.bg, color: t.text }}>
-    <aside style={{ width: 240, background: t.sidebar, display: "flex", flexDirection: "column", padding: "20px 14px", flexShrink: 0 }}>
+    {mobile && drawer && <div onClick={() => setDrawer(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 40 }} />}
+    <aside style={{ width: 240, background: t.sidebar, display: "flex", flexDirection: "column", padding: "20px 14px", flexShrink: 0, ...(mobile ? { position: "fixed", top: 0, bottom: 0, left: 0, zIndex: 41, transform: drawer ? "translateX(0)" : "translateX(-100%)", transition: "transform .25s", boxShadow: drawer ? "0 0 40px rgba(0,0,0,0.5)" : "none" } : {}) }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "4px 8px 16px" }}>
-        <button onClick={() => setRoute("profile")} title="Open your profile" aria-label="Profile" style={{ border: "none", background: "transparent", padding: 0, cursor: "pointer", borderRadius: "50%", boxShadow: route === "profile" ? `0 0 0 2px ${t.gold}` : "none" }}><RoleGlyph role={role} size={48} onDark /></button>
-        <div style={{ lineHeight: 1.1 }}><div style={{ fontWeight: 400, fontSize: 24, color: "#fff", fontFamily: SCRIPT }}>{brand.appName}<sup style={{ fontSize: 10, fontFamily: "system-ui", color: t.gold }}>®</sup></div><div style={{ fontSize: 9.5, color: t.gold, letterSpacing: 0.5, marginTop: 2, textTransform: "uppercase" }}>{role} workspace</div></div>
+        <button onClick={() => go("profile")} title="Open your profile" aria-label="Profile" style={{ border: "none", background: "transparent", padding: 0, cursor: "pointer", borderRadius: "50%", boxShadow: route === "profile" ? `0 0 0 2px ${t.gold}` : "none" }}><RoleGlyph role={role} size={48} onDark /></button>
+        <div style={{ lineHeight: 1.1 }}><div style={{ fontSize: 22 }}><Wordmark size="1em" color="#fff" gold={t.gold} /></div><div style={{ fontSize: 9.5, color: t.gold, letterSpacing: 0.5, marginTop: 2, textTransform: "uppercase" }}>{role} workspace</div></div>
       </div>
       <div style={{ height: 1, background: `linear-gradient(90deg, ${t.gold}88, transparent)`, marginBottom: 14 }} />
       <nav style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, overflowY: "auto" }}>{nav.map((key) => { const item = NAV[key]; const Icon = item.icon; const active = route === key;
-        return (<button key={key} onClick={() => setRoute(key)} style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 14px", borderRadius: 999, border: "none", cursor: "pointer", textAlign: "left", background: active ? t.sidebarActive : "transparent", color: active ? "#2A2208" : t.sidebarText, fontSize: 13.5, fontWeight: active ? 700 : 500, boxShadow: active ? "0 3px 10px rgba(0,0,0,0.22)" : "none", transition: "all .15s" }}><Icon size={17} /> <span>{item.label}</span></button>); })}</nav>
+        return (<button key={key} onClick={() => go(key)} style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 14px", borderRadius: 999, border: "none", cursor: "pointer", textAlign: "left", background: active ? t.sidebarActive : "transparent", color: active ? "#2A2208" : t.sidebarText, fontSize: 13.5, fontWeight: active ? 700 : 500, boxShadow: active ? "0 3px 10px rgba(0,0,0,0.22)" : "none", transition: "all .15s" }}><Icon size={17} /> <span>{item.label}</span></button>); })}</nav>
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 12, marginTop: 8 }}><button onClick={onLogout} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "10px 14px", borderRadius: 999, border: "none", cursor: "pointer", background: "transparent", color: t.sidebarText, fontSize: 13, fontWeight: 600 }}><LogOut size={16} /> Sign out</button>
         <div style={{ fontSize: 9.5, color: "rgba(157,178,204,0.6)", padding: "8px 12px 0", display: "flex", justifyContent: "space-between" }}><span>Khazeen® v1.0</span><span>Run by MoDQ</span></div></div>
     </aside>
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-      <header style={{ height: 62, background: t.surface, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "0 24px", flexShrink: 0 }}>
+      <header style={{ height: 62, background: t.surface, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: mobile ? "0 14px" : "0 24px", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
-          <span style={{ display: "grid", placeItems: "center", width: 30, height: 30, borderRadius: 8, background: t.primarySoft, color: t.primary }}>{(() => { const I = NAV[route]?.icon || Megaphone; return <I size={16} />; })()}</span>
-          <div style={{ minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: t.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{NAV[route]?.label || "Khazeen"}</div><div style={{ fontSize: 10.5, color: t.textMuted }}>Khazeen® · {allocatedCamp}</div></div>
+          {mobile && <button onClick={() => setDrawer(true)} aria-label="Menu" style={{ width: 38, height: 38, borderRadius: "50%", border: `1px solid ${t.border}`, background: t.surfaceAlt, color: t.text, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}><Menu size={18} /></button>}
+          <span style={{ display: "grid", placeItems: "center", width: 30, height: 30, borderRadius: 8, background: t.primarySoft, color: t.primary, flexShrink: 0 }}>{(() => { const I = NAV[route]?.icon || Megaphone; return <I size={16} />; })()}</span>
+          <div style={{ minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: t.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{NAV[route]?.label || "Khazeen"}</div><div style={{ fontSize: 10.5, color: t.textMuted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Khazeen® · {allocatedCamp}</div></div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {lic && <span title={`License ${lic.txt}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: lic.lv === "notice" ? t.warning : t.danger, background: lic.lv === "notice" ? t.warningSoft : t.dangerSoft, padding: "6px 11px", borderRadius: 20 }}><Award size={14} /> License {lic.days}d</span>}
-          <button onClick={() => setDark(!dark)} aria-label="Theme" style={{ width: 38, height: 38, borderRadius: "50%", border: `1px solid ${t.border}`, background: t.surfaceAlt, color: t.text, cursor: "pointer", display: "grid", placeItems: "center" }}>{dark ? <Sun size={18} /> : <Moon size={18} />}</button>
-          <button onClick={() => setRoute("notifs")} aria-label="Notifications" style={{ width: 38, height: 38, borderRadius: "50%", border: `1px solid ${t.border}`, background: t.surfaceAlt, color: t.text, cursor: "pointer", display: "grid", placeItems: "center", position: "relative" }}><Bell size={18} />{unread > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 16, height: 16, padding: "0 4px", borderRadius: 8, background: t.danger, color: "#fff", fontSize: 10, fontWeight: 700, display: "grid", placeItems: "center", border: `2px solid ${t.surface}` }}>{unread}</span>}</button>
-          <button onClick={() => setRoute("profile")} style={{ display: "flex", alignItems: "center", gap: 8, height: 38, padding: "0 6px 0 4px", borderRadius: 20, border: `1px solid ${t.border}`, background: t.surfaceAlt, cursor: "pointer" }}><RoleGlyph role={role} size={28} /><span style={{ fontSize: 12.5, fontWeight: 600, color: t.text, paddingRight: 4 }}>{userName}</span></button>
+        <div style={{ display: "flex", alignItems: "center", gap: mobile ? 7 : 10, flexShrink: 0 }}>
+          {lic && !mobile && <span title={`License ${lic.txt}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: lic.lv === "notice" ? t.warning : t.danger, background: lic.lv === "notice" ? t.warningSoft : t.dangerSoft, padding: "6px 11px", borderRadius: 20 }}><Award size={14} /> License {lic.days}d</span>}
+          <button onClick={() => setDark(!dark)} aria-label="Theme" style={{ width: 38, height: 38, borderRadius: "50%", border: `1px solid ${t.border}`, background: t.surfaceAlt, color: t.text, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>{dark ? <Sun size={18} /> : <Moon size={18} />}</button>
+          <button onClick={() => go("notifs")} aria-label="Notifications" style={{ width: 38, height: 38, borderRadius: "50%", border: `1px solid ${t.border}`, background: t.surfaceAlt, color: t.text, cursor: "pointer", display: "grid", placeItems: "center", position: "relative", flexShrink: 0 }}><Bell size={18} />{unread > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 16, height: 16, padding: "0 4px", borderRadius: 8, background: t.danger, color: "#fff", fontSize: 10, fontWeight: 700, display: "grid", placeItems: "center", border: `2px solid ${t.surface}` }}>{unread}</span>}</button>
+          {!mobile && <button onClick={() => go("profile")} style={{ display: "flex", alignItems: "center", gap: 8, height: 38, padding: "0 6px 0 4px", borderRadius: 20, border: `1px solid ${t.border}`, background: t.surfaceAlt, cursor: "pointer" }}><RoleGlyph role={role} size={28} /><span style={{ fontSize: 12.5, fontWeight: 600, color: t.text, paddingRight: 4 }}>{userName}</span></button>}
         </div>
       </header>
-      <main style={{ flex: 1, overflowY: "auto", padding: 24 }}>{screen()}</main>
+      <main style={{ flex: 1, overflowY: "auto", padding: mobile ? 14 : 24 }}>{screen()}</main>
     </div>
   </div>);
 }
@@ -2558,6 +2576,12 @@ export default function App() {
   const [showRatings, setShowRatings] = useState(true); // per-user toggle for hub rating circles
   const [brand, setBrand] = useState(DEFAULT_BRAND);
   const base = BASE[dark ? "dark" : "light"];
+  useEffect(() => {
+    if (document.getElementById("khz-font")) return;
+    const l = document.createElement("link"); l.id = "khz-font"; l.rel = "stylesheet";
+    l.href = "https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap";
+    document.head.appendChild(l);
+  }, []);
   const t = { ...base, primary: brand.primary || base.primary, accent: brand.accent || base.accent };
   const fontFamily = FONTS[brand.font] || FONTS.Inter;
   const license = { number: "PH-33910", expiry: expiryInDays(150) };
