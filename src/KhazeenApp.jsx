@@ -277,18 +277,18 @@ function Splash({ appName, logo, onEnter }) {
     { g: () => <><path d="M5 12.5a7 7 0 0 1 14 0" /><path d="M2 12.5a10 10 0 0 1 20 0" /><circle cx="12" cy="13" r="1.6" /></>, t: "Instant live connection", d: "Every camp linked in real time — one change, everyone sees it." },
     { g: () => <><path d="M3 14c3 0 3-5 6-5s3 5 6 5 3-5 6-5" /><path d="M3 19c3 0 3-3 6-3s3 3 6 3 3-3 6-3" /></>, t: "Flow & rhythm", d: "Daily routines, cycles and deadlines that keep work moving." },
   ];
-  return (<div style={{ minHeight: "100vh", background: "radial-gradient(120% 90% at 50% -10%, #12345C 0%, #0B1F38 55%)", color: "#F2F6FB", display: "grid", placeItems: "center", padding: 24, fontFamily: "inherit", position: "relative", overflow: "hidden" }}>
+  return (<div style={{ minHeight: "100vh", background: "radial-gradient(120% 90% at 50% -10%, #12345C 0%, #0B1F38 55%)", color: "#F2F6FB", display: "grid", placeItems: "center", padding: "24px 16px", fontFamily: "inherit", position: "relative", overflow: "hidden", boxSizing: "border-box" }}>
     <div style={{ position: "absolute", top: -40, left: "50%", transform: "translateX(-50%)", width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle, rgba(200,162,75,0.16), transparent 70%)", pointerEvents: "none" }} />
-    <div style={{ width: 660, maxWidth: "100%", textAlign: "center", position: "relative" }}>
+    <div style={{ width: 660, maxWidth: "100%", textAlign: "center", position: "relative", boxSizing: "border-box" }}>
       <div style={{ width: 88, height: 88, borderRadius: "50%", background: "#0E2A4A", border: `2px solid ${GOLD}`, display: "grid", placeItems: "center", margin: "0 auto 16px", boxShadow: "0 0 0 8px rgba(200,162,75,0.06), 0 12px 36px rgba(0,0,0,0.45)", overflow: "hidden", fontSize: 40 }}>{logo && logo.startsWith("blob:") ? <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (logo || "💊")}</div>
-      <h1 style={{ margin: 0, lineHeight: 1, fontSize: "clamp(34px, 11vw, 52px)" }}><Wordmark size="1em" color="#fff" gold={GOLD} /></h1>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, marginTop: 9 }}>
+      <h1 style={{ margin: 0, lineHeight: 1, fontSize: "clamp(30px, 9vw, 50px)" }}><Wordmark size="1em" color="#fff" gold={GOLD} /></h1>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, marginTop: 9, flexWrap: "wrap" }}>
         <span style={{ height: 1, width: 46, background: `linear-gradient(90deg, transparent, ${GOLD})` }} />
-        <p style={{ fontSize: 11.5, color: GOLD, letterSpacing: 2.5, margin: 0 }}>MINISTRY OF DEFENCE · QATAR</p>
+        <p style={{ fontSize: "clamp(9px, 2.6vw, 11.5px)", color: GOLD, letterSpacing: 2, margin: 0, whiteSpace: "nowrap" }}>MINISTRY OF DEFENCE · QATAR</p>
         <span style={{ height: 1, width: 46, background: `linear-gradient(90deg, ${GOLD}, transparent)` }} />
       </div>
-      <p style={{ fontSize: 15.5, color: "#D7E2EF", marginTop: 16, lineHeight: 1.6, maxWidth: 560, marginInline: "auto" }}>One connected system, easier work flow, live actions.</p>
-      <div style={{ display: "flex", justifyContent: "center", gap: 30, margin: "28px 0 26px" }}>
+      <p style={{ fontSize: "clamp(13px, 3.8vw, 15.5px)", color: "#D7E2EF", marginTop: 16, lineHeight: 1.6, maxWidth: 560, marginInline: "auto" }}>One connected system, easier work flow, live actions.</p>
+      <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 26, margin: "28px 0 26px" }}>
         {caps.map((c, i) => (<span key={i} style={{ display: "grid", placeItems: "center" }}><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={GOLD2} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{c.g()}</svg></span>))}
       </div>
       <button onClick={onEnter} style={{ height: 50, padding: "0 38px", borderRadius: 12, border: "none", background: "linear-gradient(180deg, #D9B45C, #C8A24B)", color: NAVY, fontSize: 15, fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 9, boxShadow: "0 10px 26px rgba(200,162,75,0.28)" }}>Enter Khazeen <ChevronRight size={19} /></button>
@@ -316,8 +316,8 @@ function Login({ onLogin, appName, logo }) {
   const confirmReset = () => { if (code.trim() !== sentCode) { setCodeErr(true); return; } if (!np1 || np1 !== np2) { setCodeErr(false); return; } setPwMap((p) => ({ ...p, [role]: np1 })); setCustom((p) => ({ ...p, [role]: true })); setStage("pw"); setPw(""); setErr(false); setMsg("Password reset. Sign in with your new password."); };
   const saveSet = () => { if (!np1 || np1 !== np2) return; setPwMap((p) => ({ ...p, [role]: np1 })); setCustom((p) => ({ ...p, [role]: true })); setStage("pw"); setPw(""); setErr(false); setMsg("Password set. Use it to sign in."); };
   const dfld = { width: "100%", height: 46, borderRadius: 11, border: `1px solid ${LINE}`, background: NAVY, color: "#fff", fontSize: 15, padding: "0 14px", outline: "none", boxSizing: "border-box" };
-  return (<div style={{ minHeight: "100vh", background: NAVY, color: "#F2F6FB", display: "grid", placeItems: "center", padding: 24, fontFamily: "inherit", position: "relative" }}>
-    <div style={{ width: 940, maxWidth: "100%" }}>
+  return (<div style={{ minHeight: "100vh", background: NAVY, color: "#F2F6FB", display: "grid", placeItems: "center", padding: "24px 16px", fontFamily: "inherit", position: "relative", boxSizing: "border-box", overflowX: "hidden" }}>
+    <div style={{ width: 940, maxWidth: "100%", boxSizing: "border-box" }}>
       <div style={{ textAlign: "center", marginBottom: 30 }}>
         <div style={{ width: 84, height: 84, borderRadius: "50%", background: NAVY2, border: `2px solid ${GOLD}`, display: "grid", placeItems: "center", margin: "0 auto 16px", boxShadow: "0 8px 30px rgba(0,0,0,0.35)", overflow: "hidden", fontSize: 40 }}>{logo && logo.startsWith("blob:") ? <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (logo || "💊")}</div>
         <h1 style={{ margin: 0, lineHeight: 1, fontSize: "clamp(30px, 9vw, 46px)" }}><Wordmark size="1em" color="#fff" gold={GOLD} /></h1>
