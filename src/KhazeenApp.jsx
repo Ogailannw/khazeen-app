@@ -26,7 +26,7 @@ const SCRIPT = "'Shadows Into Light', 'Segoe Script', 'Comic Sans MS', cursive";
 // Khazeen wordmark with a serif ℞ tucked above the K, like a prescription pad.
 // fontSize controls overall size; inner pieces use em so it scales cleanly (incl. clamp()).
 function Wordmark({ size = 54, color = "#fff", gold = "#C9A23F", rx = "#fff", reg = 0.34 }) {
-  return (<span style={{ display: "inline-flex", alignItems: "flex-start", fontFamily: SCRIPT, fontWeight: 400, fontSize: size, color, lineHeight: 1, whiteSpace: "nowrap" }}>
+  return (<span style={{ display: "inline-flex", alignItems: "flex-start", fontFamily: SCRIPT, fontWeight: 400, fontSize: size, color, lineHeight: 1, maxWidth: "100%" }}>
     <span style={{ position: "relative", display: "inline-block" }}>
       <span style={{ position: "absolute", top: "-0.42em", left: "-0.04em", fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: "italic", fontWeight: 700, fontSize: "0.5em", color: rx, lineHeight: 1, pointerEvents: "none" }}>&#8478;</span>
       K
@@ -277,9 +277,9 @@ function Splash({ appName, logo, onEnter }) {
     { g: () => <><path d="M5 12.5a7 7 0 0 1 14 0" /><path d="M2 12.5a10 10 0 0 1 20 0" /><circle cx="12" cy="13" r="1.6" /></>, t: "Instant live connection", d: "Every camp linked in real time — one change, everyone sees it." },
     { g: () => <><path d="M3 14c3 0 3-5 6-5s3 5 6 5 3-5 6-5" /><path d="M3 19c3 0 3-3 6-3s3 3 6 3 3-3 6-3" /></>, t: "Flow & rhythm", d: "Daily routines, cycles and deadlines that keep work moving." },
   ];
-  return (<div style={{ minHeight: "100vh", background: "radial-gradient(120% 90% at 50% -10%, #12345C 0%, #0B1F38 55%)", color: "#F2F6FB", display: "grid", placeItems: "center", padding: "24px 16px", fontFamily: "inherit", position: "relative", overflow: "hidden", boxSizing: "border-box" }}>
-    <div style={{ position: "absolute", top: -40, left: "50%", transform: "translateX(-50%)", width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle, rgba(200,162,75,0.16), transparent 70%)", pointerEvents: "none" }} />
-    <div style={{ width: 660, maxWidth: "100%", textAlign: "center", position: "relative", boxSizing: "border-box" }}>
+  return (<div style={{ minHeight: "100vh", width: "100%", maxWidth: "100%", background: "radial-gradient(120% 90% at 50% -10%, #12345C 0%, #0B1F38 55%)", color: "#F2F6FB", display: "grid", placeItems: "center", padding: "24px 16px", fontFamily: "inherit", position: "relative", overflow: "hidden", boxSizing: "border-box" }}>
+    <div style={{ position: "absolute", top: -40, left: "50%", transform: "translateX(-50%)", width: "min(320px, 90vw)", height: "min(320px, 90vw)", borderRadius: "50%", background: "radial-gradient(circle, rgba(200,162,75,0.16), transparent 70%)", pointerEvents: "none" }} />
+    <div style={{ width: "min(660px, 100%)", maxWidth: "100%", textAlign: "center", position: "relative", boxSizing: "border-box" }}>
       <div style={{ width: 88, height: 88, borderRadius: "50%", background: "#0E2A4A", border: `2px solid ${GOLD}`, display: "grid", placeItems: "center", margin: "0 auto 16px", boxShadow: "0 0 0 8px rgba(200,162,75,0.06), 0 12px 36px rgba(0,0,0,0.45)", overflow: "hidden", fontSize: 40 }}>{logo && logo.startsWith("blob:") ? <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (logo || "💊")}</div>
       <h1 style={{ margin: 0, lineHeight: 1, fontSize: "clamp(30px, 9vw, 50px)" }}><Wordmark size="1em" color="#fff" gold={GOLD} /></h1>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, marginTop: 9, flexWrap: "wrap" }}>
@@ -316,8 +316,8 @@ function Login({ onLogin, appName, logo }) {
   const confirmReset = () => { if (code.trim() !== sentCode) { setCodeErr(true); return; } if (!np1 || np1 !== np2) { setCodeErr(false); return; } setPwMap((p) => ({ ...p, [role]: np1 })); setCustom((p) => ({ ...p, [role]: true })); setStage("pw"); setPw(""); setErr(false); setMsg("Password reset. Sign in with your new password."); };
   const saveSet = () => { if (!np1 || np1 !== np2) return; setPwMap((p) => ({ ...p, [role]: np1 })); setCustom((p) => ({ ...p, [role]: true })); setStage("pw"); setPw(""); setErr(false); setMsg("Password set. Use it to sign in."); };
   const dfld = { width: "100%", height: 46, borderRadius: 11, border: `1px solid ${LINE}`, background: NAVY, color: "#fff", fontSize: 15, padding: "0 14px", outline: "none", boxSizing: "border-box" };
-  return (<div style={{ minHeight: "100vh", background: NAVY, color: "#F2F6FB", display: "grid", placeItems: "center", padding: "24px 16px", fontFamily: "inherit", position: "relative", boxSizing: "border-box", overflowX: "hidden" }}>
-    <div style={{ width: 940, maxWidth: "100%", boxSizing: "border-box" }}>
+  return (<div style={{ minHeight: "100vh", width: "100%", maxWidth: "100%", background: NAVY, color: "#F2F6FB", display: "grid", placeItems: "center", padding: "24px 16px", fontFamily: "inherit", position: "relative", boxSizing: "border-box", overflowX: "hidden" }}>
+    <div style={{ width: "min(940px, 100%)", maxWidth: "100%", boxSizing: "border-box" }}>
       <div style={{ textAlign: "center", marginBottom: 30 }}>
         <div style={{ width: 84, height: 84, borderRadius: "50%", background: NAVY2, border: `2px solid ${GOLD}`, display: "grid", placeItems: "center", margin: "0 auto 16px", boxShadow: "0 8px 30px rgba(0,0,0,0.35)", overflow: "hidden", fontSize: 40 }}>{logo && logo.startsWith("blob:") ? <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (logo || "💊")}</div>
         <h1 style={{ margin: 0, lineHeight: 1, fontSize: "clamp(30px, 9vw, 46px)" }}><Wordmark size="1em" color="#fff" gold={GOLD} /></h1>
@@ -416,9 +416,9 @@ function Login({ onLogin, appName, logo }) {
 
 /* ================= HUB ================= */
 const HUB_SEED = [
-  { id: 1, tag: "Policy", title: "Updated cold-chain excursion procedure", body: "Any fridge reading outside 2–8°C must be logged and the batch quarantined within 1 hour.", by: "🏛️", time: "Today 07:10", pinned: true, oks: ["N. Otaibi", "S. Hassan"], comments: [] },
-  { id: 2, tag: "Cycle", title: "October order cycle closes 28 Sep", body: "Submit reorder and store requests before the 28th.", by: "📋", time: "Yesterday", pinned: false, oks: [], comments: [{ id: 1, by: "N. Otaibi", text: "Does this include controlled-drug reorders?", time: "Yesterday" }] },
-  { id: 3, tag: "Stock requirement", title: "Insulin shipment arriving Thursday", body: "Main store receives Insulin Glargine. Camps may request redistribution.", by: "📦", time: "2 days ago", pinned: false, oks: ["F. Al-Kuwari"], comments: [] },
+  { id: 1, tag: "Policy", title: "Updated cold-chain excursion procedure", body: "Any fridge reading outside 2–8°C must be logged and the batch quarantined within 1 hour.", by: "🏛️", time: "Today 07:10", pinned: true, oks: ["Yaqeen", "S. Hassan"], comments: [] },
+  { id: 2, tag: "Cycle", title: "October order cycle closes 28 Sep", body: "Submit reorder and store requests before the 28th.", by: "📋", time: "Yesterday", pinned: false, oks: [], comments: [{ id: 1, by: "Yaqeen", text: "Does this include controlled-drug reorders?", time: "Yesterday" }] },
+  { id: 3, tag: "Stock requirement", title: "Insulin shipment arriving Thursday", body: "Main store receives Insulin Glargine. Camps may request redistribution.", by: "📦", time: "2 days ago", pinned: false, oks: ["M. Obaidly"], comments: [] },
 ];
 const TAGS = ["Policy", "Stock requirement", "Cycle", "General"];
 function PostCard({ p, tc, myName, canPin, canUnsend, onPin, onUnsend, onOk, onComment }) {
@@ -558,8 +558,8 @@ function AdminDashboard() {
   const open = items.filter((r) => r.status === "open"); const done = items.filter((r) => r.status === "done");
   const kc = (k) => k === "Fix" ? t.warning : k === "Add" ? t.success : k === "Change request" ? t.accent : t.primary;
   const comments = [
-    { by: "🏛️ F. Al-Kuwari", text: "Zone re-categorisation looks good — thanks for the quick turnaround.", time: "Today 09:10" },
-    { by: "📋 M. Saleh", text: "Please prioritise the license-number fix before month-end reporting.", time: "Yesterday" },
+    { by: "🏛️ M. Obaidly", text: "Zone re-categorisation looks good — thanks for the quick turnaround.", time: "Today 09:10" },
+    { by: "📋 Dalia & Asmaa", text: "Please prioritise the license-number fix before month-end reporting.", time: "Yesterday" },
   ];
   return (<Page title="Dashboard" subtitle="Requests from Management & Sub-Manager — fulfillment overview."
     info="Admin's dashboard tracks what Management and Sub-Manager have asked for and whether it's been fulfilled. Act on items in the Approvals screen; this is the at-a-glance status and their comments.">
@@ -653,11 +653,11 @@ function FindMe() {
 const MOVE_TYPES = ["Expiry box", "Crash cart", "Emergency room", "Dispensed (extra)"];
 const REMARK_FLAGS = ["RESERVED", "Store cold", "High alert", "LASA"];
 const LOG_SEED = [
-  { id: 1, code: "1230", name: "Paracetamol 500mg", batch: "PAR-2025-A", expiry: "2026-11-30", date: today(), begin: 2010, dispensed: 1850, moveTo: "Tariq Camp", moved: 120, flags: [], min: 400, max: 2500, controlled: false, received: 0, counted: null, by: "N. Otaibi", at: "08:40" },
+  { id: 1, code: "1230", name: "Paracetamol 500mg", batch: "PAR-2025-A", expiry: "2026-11-30", date: today(), begin: 2010, dispensed: 1850, moveTo: "Tariq Camp", moved: 120, flags: [], min: 400, max: 2500, controlled: false, received: 0, counted: null, by: "Yaqeen", at: "08:40" },
   { id: 2, code: "1234", name: "Augmentin 650mg", batch: "AUG-650-X", expiry: "2026-08-15", date: today(), begin: 600, dispensed: 420, moveTo: "—", moved: 0, flags: ["RESERVED"], min: 150, max: 800, controlled: false, received: 0, counted: null, by: "S. Hassan", at: "09:15" },
-  { id: 3, code: "1450", name: "Ceftriaxone 1g", batch: "CEF-2291", expiry: "2026-07-04", date: today(), begin: 200, dispensed: 60, moveTo: "Expiry box", moved: 16, flags: ["High alert"], min: 60, max: 300, controlled: false, received: 0, counted: null, by: "N. Otaibi", at: "11:02" },
+  { id: 3, code: "1450", name: "Ceftriaxone 1g", batch: "CEF-2291", expiry: "2026-07-04", date: today(), begin: 200, dispensed: 60, moveTo: "Expiry box", moved: 16, flags: ["High alert"], min: 60, max: 300, controlled: false, received: 0, counted: null, by: "Yaqeen", at: "11:02" },
   { id: 4, code: "1700", name: "Insulin Glargine", batch: "INS-0042", expiry: "2026-07-28", date: today(), begin: 120, dispensed: 86, moveTo: "Al-Rayyan Field Clinic", moved: 10, flags: ["Store cold"], min: 40, max: 200, controlled: false, received: 0, counted: null, by: "S. Hassan", at: "13:30" },
-  { id: 5, code: "1820", name: "Morphine sulfate 10mg", batch: "MOR-CD-77", expiry: "2026-09-20", date: today(), begin: 80, dispensed: 22, moveTo: "—", moved: 0, flags: ["High alert", "Controlled"], min: 20, max: 120, controlled: true, received: 0, counted: null, by: "N. Otaibi", at: "14:05" },
+  { id: 5, code: "1820", name: "Morphine sulfate 10mg", batch: "MOR-CD-77", expiry: "2026-09-20", date: today(), begin: 80, dispensed: 22, moveTo: "—", moved: 0, flags: ["High alert", "Controlled"], min: 20, max: 120, controlled: true, received: 0, counted: null, by: "Yaqeen", at: "14:05" },
 ];
 function autoRemarks(r, t, disp) { const used = disp == null ? r.dispensed : disp; const rem = r.begin - used - r.moved, dd = d2e(r.expiry), out = [];
   if (rem <= r.begin * 0.15) out.push({ k: "Low quantity", fg: t.warning, bg: t.warningSoft });
@@ -794,8 +794,8 @@ function RecallModal({ item, onClose, onConfirm }) {
 
 /* ================= CONTROLLED-DRUG REGISTER (double-signature) ================= */
 const CD_SEED = [
-  { id: 1, date: today(), drug: "Morphine sulfate 10mg", batch: "MOR-CD-77", txn: "Dispensed", qty: 2, balance: 78, patient: "A. Al-Sulaiti (QA-44821)", by: "N. Otaibi", witness: "S. Hassan" },
-  { id: 2, date: today(), drug: "Morphine sulfate 10mg", batch: "MOR-CD-77", txn: "Received", qty: 50, balance: 80, patient: "—", by: "N. Otaibi", witness: "Capt. A. Khalifa" },
+  { id: 1, date: today(), drug: "Morphine sulfate 10mg", batch: "MOR-CD-77", txn: "Dispensed", qty: 2, balance: 78, patient: "A. Al-Sulaiti (QA-44821)", by: "Yaqeen", witness: "S. Hassan" },
+  { id: 2, date: today(), drug: "Morphine sulfate 10mg", batch: "MOR-CD-77", txn: "Received", qty: 50, balance: 80, patient: "—", by: "Yaqeen", witness: "Capt. A. Khalifa" },
 ];
 const CD_TXN = ["Dispensed", "Received", "Wasted", "Returned"];
 function ControlledRegister({ allocatedCamp, userName, role }) {
@@ -855,7 +855,7 @@ function CDModal({ lastBalance, userName, onClose, onSave }) {
 
 /* ================= SHIFT HANDOVER ================= */
 const HANDOVER_SEED = [
-  { id: 1, shift: "Morning → Afternoon", by: "N. Otaibi", time: "Today 14:00", note: "Fridge temp logged at 4.6°C. Ceftriaxone CEF-2291 moved to expiry box (16 units). Awaiting Augmentin delivery from main store." },
+  { id: 1, shift: "Morning → Afternoon", by: "Yaqeen", time: "Today 14:00", note: "Fridge temp logged at 4.6°C. Ceftriaxone CEF-2291 moved to expiry box (16 units). Awaiting Augmentin delivery from main store." },
   { id: 2, shift: "Night → Morning", by: "S. Hassan", time: "Today 07:30", note: "Quiet night. Insulin stock low — flagged for reorder. One controlled-drug entry pending witness." },
 ];
 function Handover({ allocatedCamp, userName }) {
@@ -1543,13 +1543,13 @@ function MyTaskModal({ initial, onClose, onSave }) {
 /* ================= APPROVALS ================= */
 const REQ_SEED = [
   { id: 1, type: "Transfer", item: "Augmentin 1000mg", batch: "#AUG2026-X", qty: 50, from: "Tariq Camp", to: "Al-Udeid Clinic", by: "🩺 Dr. Al-Thani", status: "pending" },
-  { id: 2, type: "Store", item: "Insulin Glargine", batch: "#INS-0042", qty: 30, from: "Main store", to: "Al-Rayyan Field Clinic", by: "💊 N. Otaibi", status: "pending" },
+  { id: 2, type: "Store", item: "Insulin Glargine", batch: "#INS-0042", qty: 30, from: "Main store", to: "Al-Rayyan Field Clinic", by: "💊 Yaqeen", status: "pending" },
   { id: 3, type: "Store", item: "Paracetamol 500mg", batch: "#PAR-2025-A", qty: 500, from: "Main store", to: "Doha HQ", by: "💊 S. Hassan", status: "approved", actor: "You", time: "Today 09:02" },
 ];
 const ADMIN_REQ_SEED = [
-  { id: 1, kind: "Change request", title: "Add a new camp to the South zone", detail: "Please create 'Al-Wakrah Clinic' and assign it to South.", by: "🏛️ F. Al-Kuwari", status: "open", time: "Today 08:30" },
-  { id: 2, kind: "Fix", title: "Correct a user's license number", detail: "N. Otaibi's license should read PH-33910, not PH-33901.", by: "📋 M. Saleh", status: "open", time: "Yesterday" },
-  { id: 3, kind: "Add", title: "Add 'Optometrist' as a medical profession option", detail: "Needed for the new eye clinic staff.", by: "🏛️ F. Al-Kuwari", status: "done", time: "2 days ago" },
+  { id: 1, kind: "Change request", title: "Add a new camp to the South zone", detail: "Please create 'Al-Wakrah Clinic' and assign it to South.", by: "🏛️ M. Obaidly", status: "open", time: "Today 08:30" },
+  { id: 2, kind: "Fix", title: "Correct a user's license number", detail: "Yaqeen's license should read PH-33910, not PH-33901.", by: "📋 Dalia & Asmaa", status: "open", time: "Yesterday" },
+  { id: 3, kind: "Add", title: "Add 'Optometrist' as a medical profession option", detail: "Needed for the new eye clinic staff.", by: "🏛️ M. Obaidly", status: "done", time: "2 days ago" },
 ];
 function Approvals({ role }) {
   const t = useT(); const { notify, me } = useApp();
@@ -1627,12 +1627,12 @@ function AdminReqModal({ initial, toAdmin, onClose, onSave }) {
 /* ================= USERS ================= */
 const USER_SEED = [
   { id: 1, name: "Capt. A. Khalifa", role: "Admin", camp: "Doha HQ", license: "PH-10293", phone: "+974 5500 1122", status: "active" },
-  { id: 2, name: "F. Al-Kuwari", role: "Management", camp: "Doha HQ", license: "PH-19002", phone: "+974 5500 2211", status: "active" },
-  { id: 3, name: "M. Saleh", role: "Sub-Manager", camp: "Tariq Camp", license: "PH-20481", phone: "+974 5500 3344", status: "active" },
-  { id: 4, name: "R. Saad", role: "Inspector", camp: "Mid zone", license: "PH-41200", phone: "+974 5500 4040", status: "active" },
-  { id: 5, name: "N. Otaibi", role: "Pharmacist", camp: "Al-Udeid Clinic", license: "PH-33910", phone: "+974 5500 5566", status: "active" },
+  { id: 2, name: "M. Obaidly", role: "Management", camp: "Doha HQ", license: "PH-19002", phone: "+974 5500 2211", status: "active" },
+  { id: 3, name: "Dalia & Asmaa", role: "Sub-Manager", camp: "Tariq Camp", license: "PH-20481", phone: "+974 5500 3344", status: "active" },
+  { id: 4, name: "Nawras", role: "Inspector", camp: "Mid zone", license: "PH-41200", phone: "+974 5500 4040", status: "active" },
+  { id: 5, name: "Yaqeen", role: "Pharmacist", camp: "Al-Udeid Clinic", license: "PH-33910", phone: "+974 5500 5566", status: "active" },
   { id: 6, name: "Dr. Al-Thani", role: "Medical", profession: "Doctor", camp: "Al-Rayyan Field Clinic", license: "MD-88410", phone: "+974 5500 9900", status: "active" },
-  { id: 7, name: "R. Aziz", role: "Pharmacist", camp: "Store", storeRole: "Store Lead", license: "ST-70021", phone: "+974 5501 6677", status: "active" },
+  { id: 7, name: "Nada", role: "Pharmacist", camp: "Store", storeRole: "Store Lead", license: "ST-70021", phone: "+974 5501 6677", status: "active" },
   { id: 8, name: "H. Nasser", role: "Pharmacist", camp: "Store", storeRole: "Store Pharmacist", license: "ST-70044", phone: "+974 5501 7788", status: "active" },
 ];
 function UsersScreen({ canAllocate, canViewProfiles }) {
@@ -1754,15 +1754,15 @@ const STORE_ALERT_SEED = [
   { id: 7, kind: "Request", title: "Update from Management", body: "Prepare the October bulk order by the 25th.", time: "Yesterday", status: "new" },
 ];
 const STORE_STOCK_SEED = [
-  { code: "1230", name: "Paracetamol 500mg", batch: "PAR-MS-01", expiry: "2027-05-30", packSize: 1000, packs: 12, reorder: 4, unit: "cartons", by: "R. Aziz", at: "08:20" },
+  { code: "1230", name: "Paracetamol 500mg", batch: "PAR-MS-01", expiry: "2027-05-30", packSize: 1000, packs: 12, reorder: 4, unit: "cartons", by: "Nada", at: "08:20" },
   { code: "1235", name: "Augmentin 1000mg", batch: "AUG-MS-04", expiry: "2026-12-01", packSize: 200, packs: 17, reorder: 6, unit: "cartons", by: "H. Nasser", at: "08:55" },
-  { code: "1700", name: "Insulin Glargine", batch: "INS-MS-09", expiry: "2026-10-12", packSize: 40, packs: 16, reorder: 10, unit: "cold boxes", by: "R. Aziz", at: "09:40" },
+  { code: "1700", name: "Insulin Glargine", batch: "INS-MS-09", expiry: "2026-10-12", packSize: 40, packs: 16, reorder: 10, unit: "cold boxes", by: "Nada", at: "09:40" },
   { code: "1450", name: "Ceftriaxone 1g", batch: "CEF-MS-22", expiry: "2027-02-18", packSize: 50, packs: 36, reorder: 8, unit: "cartons", by: "L. Ibrahim", at: "10:15" },
   { code: "1310", name: "Metformin 850mg", batch: "MET-MS-13", expiry: "2027-08-09", packSize: 500, packs: 5, reorder: 6, unit: "cartons", by: "H. Nasser", at: "11:30" },
 ];
 const STORE_INCOMING_SEED = [
-  { id: 1, type: "Urgent", item: "Insulin Glargine", qty: 30, to: "Al-Rayyan Field Clinic", by: "💊 N. Otaibi", status: "new", notes: [] },
-  { id: 2, type: "Monthly demand", item: "Augmentin 1000mg", qty: 2000, to: "Tariq Camp", by: "📋 M. Saleh", status: "forwarded", notes: ["Forwarded to 🏛️ management & 📋 Sub-Manager"] },
+  { id: 1, type: "Urgent", item: "Insulin Glargine", qty: 30, to: "Al-Rayyan Field Clinic", by: "💊 Yaqeen", status: "new", notes: [] },
+  { id: 2, type: "Monthly demand", item: "Augmentin 1000mg", qty: 2000, to: "Tariq Camp", by: "📋 Dalia & Asmaa", status: "forwarded", notes: ["Forwarded to 🏛️ management & 📋 Sub-Manager"] },
   { id: 3, type: "Request", item: "Paracetamol 500mg", qty: 500, to: "Doha HQ", by: "💊 S. Hassan", status: "approved", notes: ["Forwarded for approval", "Approved by 🏛️ management"] },
   { id: 4, type: "Request", item: "Ceftriaxone 1g", qty: 300, to: "Al-Udeid Clinic", by: "💊 A. Khalifa", status: "dispatched", notes: ["Approved by 📋 Sub-Manager", "Dispatched by store"] },
 ];
@@ -1773,7 +1773,7 @@ const STORE_TASKS_SEED = [
   { id: 4, title: "Reconcile dispatch notes for the week", assignedBy: "Management", assignee: "All store pharmacists", due: "Thu", done: false },
 ];
 const STORE_PHARM_SEED = [
-  { id: 1, name: "R. Aziz", staffId: "ST-70021", role: "Store Lead" },
+  { id: 1, name: "Nada", staffId: "ST-70021", role: "Store Lead" },
   { id: 2, name: "H. Nasser", staffId: "ST-70044", role: "Store Pharmacist" },
   { id: 3, name: "L. Ibrahim", staffId: "ST-70058", role: "Store Pharmacist" },
 ];
@@ -2018,9 +2018,9 @@ function SignatureField({ value, onChange, label }) {
 function StoreRequest({ allocatedCamp, role, userName }) {
   const t = useT(); const { me } = useApp();
   const [reqs, setReqs] = useState([
-    { id: 1, type: "urgent", item: "Insulin Glargine", qty: 30, status: "approved", by: userName, sig: { typed: userName }, approver: "F. Al-Kuwari", approverSig: { typed: "F. Al-Kuwari" } },
+    { id: 1, type: "urgent", item: "Insulin Glargine", qty: 30, status: "approved", by: userName, sig: { typed: userName }, approver: "M. Obaidly", approverSig: { typed: "M. Obaidly" } },
     { id: 2, type: "monthly", item: "Augmentin 1000mg", qty: 2000, status: "pending", by: userName, sig: { typed: userName } },
-    { id: 3, type: "request", item: "Paracetamol 500mg", qty: 500, status: "dispatched", by: userName, sig: { typed: userName }, approver: "M. Saleh", approverSig: { typed: "M. Saleh" } },
+    { id: 3, type: "request", item: "Paracetamol 500mg", qty: 500, status: "dispatched", by: userName, sig: { typed: userName }, approver: "Dalia & Asmaa", approverSig: { typed: "Dalia & Asmaa" } },
   ]);
   const [modal, setModal] = useState(null);
   const canApprove = role === "Management" || role === "Sub-Manager";
@@ -2105,7 +2105,7 @@ function ReqModal({ item, camps, onClose }) {
   </Modal>);
 }
 function MyRequests() {
-  const t = useT(); const data = [{ item: "Augmentin 1000mg", qty: 50, from: "Tariq Camp", to: "Al-Udeid Clinic", status: "approved", who: "📋 M. Saleh", time: "Today 08:14" }, { item: "Insulin Glargine", qty: 10, from: "Doha HQ", to: "Al-Rayyan Field Clinic", status: "pending", who: "—", time: "Today 07:50" }];
+  const t = useT(); const data = [{ item: "Augmentin 1000mg", qty: 50, from: "Tariq Camp", to: "Al-Udeid Clinic", status: "approved", who: "📋 Dalia & Asmaa", time: "Today 08:14" }, { item: "Insulin Glargine", qty: 10, from: "Doha HQ", to: "Al-Rayyan Field Clinic", status: "pending", who: "—", time: "Today 07:50" }];
   return (<Page title="My requests" subtitle="Your transfer requests. Locked to view-only once a decision is made.">
     <div style={{ display: "grid", gap: 10 }}>{data.map((r, i) => { const s = { approved: { fg: t.success, bg: t.successSoft, l: "Approved" }, pending: { fg: t.warning, bg: t.warningSoft, l: "Pending" }, rejected: { fg: t.danger, bg: t.dangerSoft, l: "Rejected" } }[r.status];
       return (<div key={i} style={card(t)}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><span style={{ fontSize: 14, fontWeight: 600 }}>{r.item}</span><span style={{ fontSize: 12, fontWeight: 700, color: s.fg, background: s.bg, padding: "4px 11px", borderRadius: 20 }}>{s.l}</span></div><div style={{ fontSize: 12.5, color: t.textMuted, marginTop: 7, display: "flex", alignItems: "center", gap: 6 }}>{r.qty} units · {r.from} <ArrowLeftRight size={12} /> {r.to}</div><div style={{ fontSize: 11.5, color: t.textMuted, marginTop: 3 }}>{r.status === "pending" ? "Awaiting approval" : `By ${r.who}`} · {r.time}</div></div>); })}</div>
@@ -2189,7 +2189,7 @@ const INSPECT_CHECKS = [
   { key: "tasks_done", label: "Daily tasks completed" },
 ];
 const INSPECT_SEED = [
-  { id: 1, camp: "Tariq Camp", inspector: "R. Saad", pharmacist: "N. Otaibi", arrival: "09:10", leave: "09:55", rating: 7, comments: "Good order overall; expiry shelf needs tidying.", reqs: "Replace 2 broken shelf bins", checks: { disp_checked: true, disp_registered: true, disp_filed: false, cleanliness: true, tasks_done: true }, when: "Today" },
+  { id: 1, camp: "Tariq Camp", inspector: "Nawras", pharmacist: "Yaqeen", arrival: "09:10", leave: "09:55", rating: 7, comments: "Good order overall; expiry shelf needs tidying.", reqs: "Replace 2 broken shelf bins", checks: { disp_checked: true, disp_registered: true, disp_filed: false, cleanliness: true, tasks_done: true }, when: "Today" },
 ];
 function Inspections({ role, allocatedCamp, notify }) {
   const t = useT(); const { camps, campZones, setRating } = useApp();
@@ -2227,7 +2227,7 @@ function Inspections({ role, allocatedCamp, notify }) {
 }
 function InspectModal({ initial, camps, onClose, onSave }) {
   const t = useT();
-  const [f, setF] = useState({ id: initial.id, camp: initial.camp || camps[0] || "", inspector: initial.inspector || "R. Saad", pharmacist: initial.pharmacist || "", arrival: initial.arrival || "", leave: initial.leave || "", rating: initial.rating ?? 8, comments: initial.comments || "", reqs: initial.reqs || "", checks: initial.checks || { disp_checked: false, disp_registered: false, disp_filed: false, cleanliness: false, tasks_done: false } });
+  const [f, setF] = useState({ id: initial.id, camp: initial.camp || camps[0] || "", inspector: initial.inspector || "Nawras", pharmacist: initial.pharmacist || "", arrival: initial.arrival || "", leave: initial.leave || "", rating: initial.rating ?? 8, comments: initial.comments || "", reqs: initial.reqs || "", checks: initial.checks || { disp_checked: false, disp_registered: false, disp_filed: false, cleanliness: false, tasks_done: false } });
   const v = f.camp && f.pharmacist && f.arrival && f.leave;
   const fld = { width: "100%", height: 42, borderRadius: 9, border: `1px solid ${t.border}`, background: t.surfaceAlt, color: t.text, fontSize: 14, padding: "0 12px", outline: "none", boxSizing: "border-box" };
   const lab = { fontSize: 12, color: t.textMuted, fontWeight: 600, marginBottom: 5, display: "block" };
@@ -2254,7 +2254,7 @@ function InspectModal({ initial, camps, onClose, onSave }) {
 }
 
 /* ================= ZONES (categorize camps + assign inspectors) ================= */
-const INSPECTOR_SEED = [{ id: 1, name: "R. Saad", zone: "Mid" }, { id: 2, name: "K. Fahad", zone: "North" }, { id: 3, name: "Y. Hamad", zone: "South" }];
+const INSPECTOR_SEED = [{ id: 1, name: "Nawras", zone: "Mid" }, { id: 2, name: "K. Fahad", zone: "North" }, { id: 3, name: "Y. Hamad", zone: "South" }];
 function Zones() {
   const t = useT(); const { camps, campZones, setCampZone, ratings } = useApp();
   const [inspectors, setInspectors] = useState(INSPECTOR_SEED); const [addInsp, setAddInsp] = useState(false);
@@ -2554,12 +2554,12 @@ function Shell({ role, dark, setDark, brand, setBrand, license, allocatedCamp, u
 
 /* ================= ROOT ================= */
 const ALLOCATED = { Pharmacist: "Al-Udeid Clinic", Medical: "Al-Rayyan Field Clinic", "Sub-Manager": "Tariq Camp", Store: "Doha HQ", Admin: "Doha HQ", Management: "Doha HQ", Inspector: "Mid zone" };
-const USER_NAMES = { Pharmacist: "N. Otaibi", Medical: "Dr. Al-Thani", "Sub-Manager": "M. Saleh", Store: "R. Aziz", Admin: "Capt. A. Khalifa", Management: "F. Al-Kuwari", Inspector: "R. Saad" };
+const USER_NAMES = { Pharmacist: "Yaqeen", Medical: "Dr. Al-Thani", "Sub-Manager": "Dalia & Asmaa", Store: "Nada", Admin: "Capt. A. Khalifa", Management: "M. Obaidly", Inspector: "Nawras" };
 const USER_MIL = { Pharmacist: "QA-50231", Medical: "QA-44120", "Sub-Manager": "QA-33891", Store: "QA-61740", Admin: "QA-10002", Management: "QA-20015", Inspector: "QA-47783" };
 function expiryInDays(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 const NOTIF_SEED = [
   { id: 1, kind: "Approval", to: ["Pharmacist"], text: "Your store request for Augmentin 1000mg was approved.", time: "10m ago", read: false },
-  { id: 2, kind: "Rating", to: ["Management", "Sub-Manager"], text: "Al-Udeid Clinic rated 7/10 by Inspector R. Saad.", time: "1h ago", read: false },
+  { id: 2, kind: "Rating", to: ["Management", "Sub-Manager"], text: "Al-Udeid Clinic rated 7/10 by Inspector Nawras.", time: "1h ago", read: false },
   { id: 3, kind: "Inspection", to: ["Management", "Sub-Manager"], text: "Inspection report filed for Tariq Camp.", time: "2h ago", read: false },
   { id: 4, kind: "License", to: ["Pharmacist"], text: "Your license expires in 150 days — plan renewal.", time: "Today", read: true },
   { id: 5, kind: "Camp change", to: ["Medical"], text: "You were re-allocated to Al-Rayyan Field Clinic.", time: "Yesterday", read: true },
@@ -2606,7 +2606,7 @@ export default function App() {
     <ThemeCtx.Provider value={t}>
       <AppCtx.Provider value={ctx}>
         <div style={{ fontFamily, width: "100%", overflowX: "hidden" }}>
-          <style>{`*{box-sizing:border-box} html,body,#root{margin:0;padding:0;width:100%;max-width:100%;overflow-x:hidden}`}</style>
+          <style>{`*{box-sizing:border-box} html,body,#root{margin:0!important;padding:0!important;width:100%!important;max-width:100%!important;overflow-x:hidden!important} #root{position:relative}`}</style>
           {!entered ? <Splash appName={brand.appName} logo={brand.logo} onEnter={() => setEntered(true)} />
             : role ? <Shell role={role} dark={dark} setDark={setDark} brand={brand} setBrand={setBrand} license={license} allocatedCamp={allocatedCamp} userName={userName} onLogout={() => setRole(null)} />
             : <Login onLogin={setRole} appName={brand.appName} logo={brand.logo} />}
