@@ -2547,7 +2547,7 @@ function Shell({ role, dark, setDark, brand, setBrand, license, allocatedCamp, u
           {!mobile && <button onClick={() => go("profile")} style={{ display: "flex", alignItems: "center", gap: 8, height: 38, padding: "0 6px 0 4px", borderRadius: 20, border: `1px solid ${t.border}`, background: t.surfaceAlt, cursor: "pointer" }}><RoleGlyph role={role} size={28} /><span style={{ fontSize: 12.5, fontWeight: 600, color: t.text, paddingRight: 4 }}>{userName}</span></button>}
         </div>
       </header>
-      <main style={{ flex: 1, overflowY: "auto", padding: mobile ? 14 : 24 }}>{screen()}</main>
+      <main style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minWidth: 0, padding: mobile ? 14 : 24 }}>{screen()}</main>
     </div>
   </div>);
 }
@@ -2605,8 +2605,8 @@ export default function App() {
   return (
     <ThemeCtx.Provider value={t}>
       <AppCtx.Provider value={ctx}>
-        <div style={{ fontFamily, maxWidth: "100vw", overflowX: "hidden" }}>
-          <style>{`*{box-sizing:border-box} html,body,#root{margin:0;max-width:100%;overflow-x:hidden}`}</style>
+        <div style={{ fontFamily, width: "100%", overflowX: "hidden" }}>
+          <style>{`*{box-sizing:border-box} html,body,#root{margin:0;padding:0;width:100%;max-width:100%;overflow-x:hidden}`}</style>
           {!entered ? <Splash appName={brand.appName} logo={brand.logo} onEnter={() => setEntered(true)} />
             : role ? <Shell role={role} dark={dark} setDark={setDark} brand={brand} setBrand={setBrand} license={license} allocatedCamp={allocatedCamp} userName={userName} onLogout={() => setRole(null)} />
             : <Login onLogin={setRole} appName={brand.appName} logo={brand.logo} />}
