@@ -885,18 +885,20 @@ function HandoverModal({ userName, onClose, onSave }) {
   </Modal>);
 }
 function LogsScreen({ role, privileged, canEditStock, allocatedCamp, userName }) {
-  const t = useT(); const [tab, setTab] = useState("daily");
-  const tabs = [{ k: "daily", label: "Daily log", icon: CalendarDays }, { k: "inventory", label: "Inventory log", icon: ClipboardList }, { k: "chronic", label: "Chronic Pts log", icon: HeartPulse }];
+  const t = useT(); const isMed = role === "Medical";
+  const [tab, setTab] = useState(isMed ? "inventory" : "daily");
+  const allTabs = [{ k: "daily", label: "Daily log", icon: CalendarDays }, { k: "inventory", label: "Inventory log", icon: ClipboardList }, { k: "chronic", label: "Chronic Pts log", icon: HeartPulse }];
+  const tabs = isMed ? allTabs.filter((x) => x.k !== "daily") : allTabs;
   return (<div>
     <div style={{ display: "inline-flex", gap: 4, padding: 4, borderRadius: 999, background: t.surfaceAlt, border: `1px solid ${t.border}`, marginBottom: 4, flexWrap: "wrap" }}>
       {tabs.map((x) => { const on = tab === x.k; const Ic = x.icon;
         return (<button key={x.k} onClick={() => setTab(x.k)} style={{ display: "inline-flex", alignItems: "center", gap: 7, height: 38, padding: "0 18px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 700, background: on ? t.primary : "transparent", color: on ? "#fff" : t.textMuted, boxShadow: on ? "0 3px 10px rgba(45,125,210,0.28)" : "none", transition: "all .15s" }}><Ic size={15} /> {x.label}</button>); })}
     </div>
-    {tab === "daily"
+    {tab === "daily" && !isMed
       ? <Dispensing canEdit={canEditStock} privileged={privileged} allocatedCamp={allocatedCamp} />
-      : tab === "inventory"
-      ? <InventoryLog mode={role === "Medical" ? "viewer" : "full"} allocatedCamp={allocatedCamp} role={role} userName={userName} />
-      : <ChronicLog mode={role === "Medical" ? "viewer" : "full"} allocatedCamp={allocatedCamp} role={role} userName={userName} />}
+      : tab === "chronic"
+      ? <ChronicLog mode={isMed ? "viewer" : "full"} allocatedCamp={allocatedCamp} role={role} userName={userName} />
+      : <InventoryLog mode={isMed ? "viewer" : "full"} allocatedCamp={allocatedCamp} role={role} userName={userName} />}
   </div>);
 }
 function InventoryLog({ mode, allocatedCamp, role, userName }) {
@@ -927,7 +929,7 @@ function InventoryLog({ mode, allocatedCamp, role, userName }) {
   return (<Page title="Inventory log" subtitle={viewer ? `${allocatedCamp} — view only.` : `${allocatedCamp} — saved to this camp's records (continues across staff changes).`}
     info="Records belong to the camp/clinic, not the individual — a re-allocated colleague continues the same log. The Dispensed column is fed automatically from Daily dispensing: when an item's code matches, its month-to-date dispensed total appears here (shown with a calendar mark) and drives the remaining balance. Choose a 'Move to' destination and the moved quantity is deducted. Upload a prescription photo to count dispensing, or a batch-box photo to register a beginning balance — you confirm the read values before they're recorded. Remarks flag low quantity, near expiry, RESERVED, cold storage, high-alert and LASA."
     action={<>
-      <ExportButton title="Inventory log" build={() => ({ bodyHTML: `<table><thead><tr><th>Code</th><th>Medication</th><th>Batch</th><th>Begin</th><th>Received</th><th>Dispensed</th><th>Moved</th><th>Remaining</th></tr></thead><tbody>${filtered.map((r) => `<tr><td>${escapeHTML(r.code)}</td><td>${escapeHTML(r.name)}</td><td>${escapeHTML(r.batch)}</td><td>${r.begin}</td><td>${r.received || 0}${r.recvFrom && (r.received || 0) > 0 ? ` (${escapeHTML(r.recvFrom)})` : ""}</td><td>${dispOf(r)}</td><td>${r.moved}</td><td>${rem(r)}</td></tr>`).join("")}</tbody></table>`, text: `${filtered.length} item(s) in the inventory log.` })} />
+      {!viewer && <ExportButton title="Inventory log" build={() => ({ bodyHTML: `<table><thead><tr><th>Code</th><th>Medication</th><th>Batch</th><th>Begin</th><th>Received</th><th>Dispensed</th><th>Moved</th><th>Remaining</th></tr></thead><tbody>${filtered.map((r) => `<tr><td>${escapeHTML(r.code)}</td><td>${escapeHTML(r.name)}</td><td>${escapeHTML(r.batch)}</td><td>${r.begin}</td><td>${r.received || 0}${r.recvFrom && (r.received || 0) > 0 ? ` (${escapeHTML(r.recvFrom)})` : ""}</td><td>${dispOf(r)}</td><td>${r.moved}</td><td>${rem(r)}</td></tr>`).join("")}</tbody></table>`, text: `${filtered.length} item(s) in the inventory log.` })} />}
       {!viewer && <>
       <UploadConfirm label="Prescription photo" hint="Attach a prescription photo; confirm the medication and quantity dispensed to record it." fields={[{ key: "name", label: "Medication" }, { key: "qty", label: "Quantity dispensed", type: "number" }]} onConfirm={(v, file) => setRows((p) => [{ id: Date.now(), code: "—", name: v.name, batch: "from Rx", expiry: "2027-12-31", date: today(), begin: Number(v.qty) || 0, dispensed: Number(v.qty) || 0, moveTo: "—", moved: 0, flags: [], source: "📷 Rx: " + file.name, by: userName, at: nowT() }, ...p])} />
       <UploadConfirm label="Batch box photo" hint="Attach a photo of the medication boxes with the batch number visible; confirm the details to register a beginning balance." fields={[{ key: "code", label: "Code" }, { key: "name", label: "Medication" }, { key: "batch", label: "Batch number" }, { key: "expiry", label: "Expiry (YYYY-MM-DD)" }, { key: "begin", label: "Beginning balance", type: "number" }]} onConfirm={(v, file) => setRows((p) => [...p, { id: Date.now(), code: v.code || "—", name: v.name, batch: v.batch || "—", expiry: v.expiry || "2027-12-31", date: today(), begin: Number(v.begin) || 0, dispensed: 0, moveTo: "—", moved: 0, flags: [], source: "📦 " + file.name, by: userName, at: nowT() }])} />
