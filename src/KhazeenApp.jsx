@@ -1695,10 +1695,10 @@ const USER_SEED = [
   { id: 1, name: "Capt. A. Khalifa", role: "Admin", camp: "Doha HQ", license: "PH-10293", phone: "+974 5500 1122", status: "active" },
   { id: 2, name: "M. Obaidly", role: "Management", camp: "Doha HQ", license: "PH-19002", phone: "+974 5500 2211", status: "active" },
   { id: 3, name: "Dalia & Asmaa", role: "Sub-Manager", camp: "Tariq Camp", license: "PH-20481", phone: "+974 5500 3344", status: "active" },
-  { id: 4, name: "Nawras", role: "Inspector", camp: "Mid zone", license: "PH-41200", phone: "+974 5500 4040", status: "active" },
+  { id: 4, name: "Shayma'a", role: "Inspector", camp: "Mid zone", license: "PH-41200", phone: "+974 5500 4040", status: "active" },
   { id: 5, name: "Yaqeen", role: "Pharmacist", camp: "Al-Udeid Clinic", license: "PH-33910", phone: "+974 5500 5566", status: "active" },
   { id: 6, name: "Dr. Al-Thani", role: "Medical", profession: "Doctor", camp: "Al-Rayyan Field Clinic", license: "MD-88410", phone: "+974 5500 9900", status: "active" },
-  { id: 7, name: "Nada", role: "Pharmacist", camp: "Store", storeRole: "Store Lead", license: "ST-70021", phone: "+974 5501 6677", status: "active" },
+  { id: 7, name: "Nawras", role: "Pharmacist", camp: "Store", storeRole: "Store Lead", license: "ST-70021", phone: "+974 5501 6677", status: "active" },
   { id: 8, name: "H. Nasser", role: "Pharmacist", camp: "Store", storeRole: "Store Pharmacist", license: "ST-70044", phone: "+974 5501 7788", status: "active" },
 ];
 function UsersScreen({ canAllocate, canViewProfiles }) {
@@ -1820,9 +1820,9 @@ const STORE_ALERT_SEED = [
   { id: 7, kind: "Request", title: "Update from Management", body: "Prepare the October bulk order by the 25th.", time: "Yesterday", status: "new" },
 ];
 const STORE_STOCK_SEED = [
-  { code: "1230", name: "Paracetamol 500mg", batch: "PAR-MS-01", expiry: "2027-05-30", packSize: 1000, packs: 12, reorder: 4, unit: "cartons", by: "Nada", at: "08:20" },
+  { code: "1230", name: "Paracetamol 500mg", batch: "PAR-MS-01", expiry: "2027-05-30", packSize: 1000, packs: 12, reorder: 4, unit: "cartons", by: "Nawras", at: "08:20" },
   { code: "1235", name: "Augmentin 1000mg", batch: "AUG-MS-04", expiry: "2026-12-01", packSize: 200, packs: 17, reorder: 6, unit: "cartons", by: "H. Nasser", at: "08:55" },
-  { code: "1700", name: "Insulin Glargine", batch: "INS-MS-09", expiry: "2026-10-12", packSize: 40, packs: 16, reorder: 10, unit: "cold boxes", by: "Nada", at: "09:40" },
+  { code: "1700", name: "Insulin Glargine", batch: "INS-MS-09", expiry: "2026-10-12", packSize: 40, packs: 16, reorder: 10, unit: "cold boxes", by: "Nawras", at: "09:40" },
   { code: "1450", name: "Ceftriaxone 1g", batch: "CEF-MS-22", expiry: "2027-02-18", packSize: 50, packs: 36, reorder: 8, unit: "cartons", by: "L. Ibrahim", at: "10:15" },
   { code: "1310", name: "Metformin 850mg", batch: "MET-MS-13", expiry: "2027-08-09", packSize: 500, packs: 5, reorder: 6, unit: "cartons", by: "H. Nasser", at: "11:30" },
 ];
@@ -1839,7 +1839,7 @@ const STORE_TASKS_SEED = [
   { id: 4, title: "Reconcile dispatch notes for the week", assignedBy: "Management", assignee: "All store pharmacists", due: "Thu", done: false },
 ];
 const STORE_PHARM_SEED = [
-  { id: 1, name: "Nada", staffId: "ST-70021", role: "Store Lead" },
+  { id: 1, name: "Nawras", staffId: "ST-70021", role: "Store Lead" },
   { id: 2, name: "H. Nasser", staffId: "ST-70044", role: "Store Pharmacist" },
   { id: 3, name: "L. Ibrahim", staffId: "ST-70058", role: "Store Pharmacist" },
 ];
@@ -2437,7 +2437,7 @@ const INSPECT_CHECKS = [
   { key: "tasks_done", label: "Daily tasks completed" },
 ];
 const INSPECT_SEED = [
-  { id: 1, camp: "Tariq Camp", inspector: "Nawras", pharmacist: "Yaqeen", arrival: "09:10", leave: "09:55", rating: 7, comments: "Good order overall; expiry shelf needs tidying.", reqs: "Replace 2 broken shelf bins", checks: { disp_checked: true, disp_registered: true, disp_filed: false, cleanliness: true, tasks_done: true }, when: "Today" },
+  { id: 1, camp: "Tariq Camp", inspector: "Shayma'a", pharmacist: "Yaqeen", arrival: "09:10", leave: "09:55", rating: 7, comments: "Good order overall; expiry shelf needs tidying.", reqs: "Replace 2 broken shelf bins", checks: { disp_checked: true, disp_registered: true, disp_filed: false, cleanliness: true, tasks_done: true }, when: "Today" },
 ];
 function Inspections({ role, allocatedCamp, notify }) {
   const t = useT(); const { camps, campZones, setRating } = useApp();
@@ -2475,7 +2475,7 @@ function Inspections({ role, allocatedCamp, notify }) {
 }
 function InspectModal({ initial, camps, onClose, onSave }) {
   const t = useT();
-  const [f, setF] = useState({ id: initial.id, camp: initial.camp || camps[0] || "", inspector: initial.inspector || "Nawras", pharmacist: initial.pharmacist || "", arrival: initial.arrival || "", leave: initial.leave || "", rating: initial.rating ?? 8, comments: initial.comments || "", reqs: initial.reqs || "", checks: initial.checks || { disp_checked: false, disp_registered: false, disp_filed: false, cleanliness: false, tasks_done: false } });
+  const [f, setF] = useState({ id: initial.id, camp: initial.camp || camps[0] || "", inspector: initial.inspector || "Shayma'a", pharmacist: initial.pharmacist || "", arrival: initial.arrival || "", leave: initial.leave || "", rating: initial.rating ?? 8, comments: initial.comments || "", reqs: initial.reqs || "", checks: initial.checks || { disp_checked: false, disp_registered: false, disp_filed: false, cleanliness: false, tasks_done: false } });
   const v = f.camp && f.pharmacist && f.arrival && f.leave;
   const fld = { width: "100%", height: 42, borderRadius: 9, border: `1px solid ${t.border}`, background: t.surfaceAlt, color: t.text, fontSize: 14, padding: "0 12px", outline: "none", boxSizing: "border-box" };
   const lab = { fontSize: 12, color: t.textMuted, fontWeight: 600, marginBottom: 5, display: "block" };
@@ -2502,7 +2502,7 @@ function InspectModal({ initial, camps, onClose, onSave }) {
 }
 
 /* ================= ZONES (categorize camps + assign inspectors) ================= */
-const INSPECTOR_SEED = [{ id: 1, name: "Nawras", zone: "Mid" }, { id: 2, name: "K. Fahad", zone: "North" }, { id: 3, name: "Y. Hamad", zone: "South" }];
+const INSPECTOR_SEED = [{ id: 1, name: "Shayma'a", zone: "Mid" }, { id: 2, name: "K. Fahad", zone: "North" }, { id: 3, name: "Y. Hamad", zone: "South" }];
 function Zones() {
   const t = useT(); const { camps, campZones, setCampZone, ratings } = useApp();
   const [inspectors, setInspectors] = useState(INSPECTOR_SEED); const [addInsp, setAddInsp] = useState(false);
@@ -2803,12 +2803,12 @@ function Shell({ role, dark, setDark, brand, setBrand, license, allocatedCamp, u
 
 /* ================= ROOT ================= */
 const ALLOCATED = { Pharmacist: "Al-Udeid Clinic", Medical: "Al-Rayyan Field Clinic", "Sub-Manager": "Tariq Camp", Store: "Doha HQ", Admin: "Doha HQ", Management: "Doha HQ", Inspector: "Mid zone" };
-const USER_NAMES = { Pharmacist: "Yaqeen", Medical: "Dr. Al-Thani", "Sub-Manager": "Dalia & Asmaa", Store: "Nada", Admin: "Capt. A. Khalifa", Management: "M. Obaidly", Inspector: "Nawras" };
+const USER_NAMES = { Pharmacist: "Yaqeen", Medical: "Dr. Al-Thani", "Sub-Manager": "Dalia & Asmaa", Store: "Nawras", Admin: "Capt. A. Khalifa", Management: "M. Obaidly", Inspector: "Shayma'a" };
 const USER_MIL = { Pharmacist: "QA-50231", Medical: "QA-44120", "Sub-Manager": "QA-33891", Store: "QA-61740", Admin: "QA-10002", Management: "QA-20015", Inspector: "QA-47783" };
 function expiryInDays(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 const NOTIF_SEED = [
   { id: 1, kind: "Approval", to: ["Pharmacist"], text: "Your store request for Augmentin 1000mg was approved.", time: "10m ago", read: false },
-  { id: 2, kind: "Rating", to: ["Management", "Sub-Manager"], text: "Al-Udeid Clinic rated 7/10 by Inspector Nawras.", time: "1h ago", read: false },
+  { id: 2, kind: "Rating", to: ["Management", "Sub-Manager"], text: "Al-Udeid Clinic rated 7/10 by Inspector Shayma'a.", time: "1h ago", read: false },
   { id: 3, kind: "Inspection", to: ["Management", "Sub-Manager"], text: "Inspection report filed for Tariq Camp.", time: "2h ago", read: false },
   { id: 4, kind: "License", to: ["Pharmacist"], text: "Your license expires in 150 days — plan renewal.", time: "Today", read: true },
   { id: 5, kind: "Camp change", to: ["Medical"], text: "You were re-allocated to Al-Rayyan Field Clinic.", time: "Yesterday", read: true },
