@@ -9,7 +9,7 @@ import {
   ThumbsUp, ThumbsDown, Warehouse, PackagePlus, Flag, Star, FileText,
   ClipboardList, Link2, Settings, ScanSearch, Compass, UserCircle, Upload,
   Image, Pin, Camera, Clock, Phone, Mail,
-  Smartphone, CreditCard, ShieldCheck, StickyNote, BellOff, Stethoscope, RotateCcw, HeartPulse, Share2, Download, User, Eye, EyeOff, MessageCircle, Menu,
+  Smartphone, CreditCard, ShieldCheck, StickyNote, BellOff, Stethoscope, RotateCcw, HeartPulse, Share2, Download, User, Eye, EyeOff, MessageCircle, Menu, PackageCheck,
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -64,7 +64,7 @@ const NAV = {
   clinical: { label: "Clinical tools", icon: FlaskConical }, cpd: { label: "CPD", icon: GraduationCap },
   tasks: { label: "My tasks", icon: ListChecks }, approvals: { label: "Approvals", icon: ClipboardCheck },
   users: { label: "Users", icon: Users }, store: { label: "Main store", icon: Warehouse },
-  storetasks: { label: "Store tasks", icon: ListChecks }, storereq: { label: "Request from store", icon: PackagePlus },
+  storetasks: { label: "Store tasks", icon: ListChecks }, storereq: { label: "My requests", icon: ArrowLeftRight }, storereqs: { label: "Requests", icon: PackageCheck },
   radar: { label: "Expiry radar", icon: Radar }, requests: { label: "My requests", icon: ArrowLeftRight },
   inspect: { label: "Inspections", icon: ScanSearch }, zones: { label: "Zones", icon: Compass },
   profile: { label: "Profile", icon: UserCircle }, notifs: { label: "Notifications", icon: Bell },
@@ -77,7 +77,7 @@ const NAV_BY_ROLE = {
   Inspector: ["home", "hub", "inspect", "findme", "clinical", "cpd", "tasks", "notifs"],
   Pharmacist: ["home", "hub", "dashboard", "logs", "coldchain", "recall", "controlled", "handover", "clinical", "cpd", "tasks", "storereq", "notifs"],
   Medical: ["home", "hub", "logs", "radar", "requests", "clinical", "cpd", "tasks", "notifs"],
-  Store: ["home", "hub", "store", "storetasks", "clinical", "cpd", "notifs"],
+  Store: ["home", "hub", "store", "storereqs", "storetasks", "clinical", "cpd", "notifs"],
 };
 /* camps now carry a zone; admin/mgmt/sub-manager can re-categorize */
 const DEFAULT_CAMP_ZONES = { "Al-Udeid Clinic": "South", "Tariq Camp": "Mid", "Doha HQ": "North", "Al-Rayyan Field Clinic": "Mid" };
@@ -886,9 +886,11 @@ function HandoverModal({ userName, onClose, onSave }) {
 }
 function LogsScreen({ role, privileged, canEditStock, allocatedCamp, userName }) {
   const t = useT(); const isMed = role === "Medical";
+  const showReqStocks = role === "Pharmacist" || role === "Management" || role === "Sub-Manager";
   const [tab, setTab] = useState(isMed ? "inventory" : "daily");
   const allTabs = [{ k: "daily", label: "Daily log", icon: CalendarDays }, { k: "inventory", label: "Inventory log", icon: ClipboardList }, { k: "chronic", label: "Chronic Pts log", icon: HeartPulse }];
-  const tabs = isMed ? allTabs.filter((x) => x.k !== "daily") : allTabs;
+  let tabs = isMed ? allTabs.filter((x) => x.k !== "daily") : allTabs;
+  if (showReqStocks) tabs = [...tabs, { k: "reqstocks", label: "Medical Req. stocks", icon: PackageCheck }];
   return (<div>
     <div style={{ display: "inline-flex", gap: 4, padding: 4, borderRadius: 999, background: t.surfaceAlt, border: `1px solid ${t.border}`, marginBottom: 4, flexWrap: "wrap" }}>
       {tabs.map((x) => { const on = tab === x.k; const Ic = x.icon;
@@ -898,15 +900,55 @@ function LogsScreen({ role, privileged, canEditStock, allocatedCamp, userName })
       ? <Dispensing canEdit={canEditStock} privileged={privileged} allocatedCamp={allocatedCamp} />
       : tab === "chronic"
       ? <ChronicLog mode={isMed ? "viewer" : "full"} allocatedCamp={allocatedCamp} role={role} userName={userName} />
+      : tab === "reqstocks"
+      ? <MedReqStocks allocatedCamp={allocatedCamp} userName={userName} />
       : <InventoryLog mode={isMed ? "viewer" : "full"} allocatedCamp={allocatedCamp} role={role} userName={userName} />}
   </div>);
 }
+function MedReqStocks({ allocatedCamp, userName }) {
+  const t = useT(); const { medReqs, patchMedReq, adjustInv, notify } = useApp();
+  const th = { padding: "10px 11px", fontSize: 11.5, fontWeight: 600, color: "#C6D6E8", whiteSpace: "nowrap", borderBottom: `1px solid ${t.border}`, textAlign: "left" };
+  const td = { padding: "9px 11px", fontSize: 13, borderBottom: `1px solid ${t.border}`, verticalAlign: "top" };
+  const rows = (medReqs || []).filter((r) => r.pharmAction && (r.source === allocatedCamp || r.destCamp === allocatedCamp));
+  const codeFor = (name) => { const m = STORE_STOCK_SEED.find((s) => s.name === name) || LOG_SEED.find((s) => s.name === name); return m ? m.code : name; };
+  const confirm = (r) => {
+    const code = codeFor(r.item);
+    if (r.pharmAction === "fulfil") { adjustInv(allocatedCamp, code, "mov", r.qty); notify("Stock", ["Pharmacist", "Management", "Sub-Manager"], `➖ ${r.qty} × ${r.item} deducted from ${allocatedCamp} (sent to ${r.destCamp}). Inventory updated.`); patchMedReq(r.id, { status: "sent", confirmedAt: today() }); }
+    else { adjustInv(allocatedCamp, code, "recv", r.qty); notify("Stock", ["Pharmacist", "Management", "Sub-Manager"], `➕ ${r.qty} × ${r.item} added to ${allocatedCamp} (received from ${r.source}). Inventory updated.`); patchMedReq(r.id, { status: "received", confirmedAt: today() }); }
+  };
+  return (<div>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 6 }}>
+      <div><div style={{ fontSize: 18, fontWeight: 800, display: "flex", alignItems: "center", gap: 8 }}><PackageCheck size={19} color={t.primary} /> Medical Req. stocks</div>
+      <div style={{ fontSize: 12.5, color: t.textMuted, marginTop: 4 }}>Approved transfers you chose to fulfil or receive at {allocatedCamp}. Confirm to apply the stock change to the inventory log.</div></div>
+    </div>
+    {rows.length === 0
+      ? <div style={{ ...card(t), textAlign: "center", color: t.textMuted, fontSize: 13.5, padding: "34px 16px", marginTop: 14 }}>Nothing here yet. When you choose <strong>Fulfil</strong> or <strong>Receive</strong> on an approved request (in My requests), it appears here to confirm the stock change.</div>
+      : <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 14, overflow: "hidden", marginTop: 14 }}><div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }}>
+          <thead><tr style={{ background: t.head }}><th style={th}>Date</th><th style={th}>Medication</th><th style={{ ...th, textAlign: "right" }}>Qty</th><th style={th}>From → To</th><th style={th}>Requested by</th><th style={th}>Type</th><th style={{ ...th, textAlign: "right" }}>Action</th></tr></thead>
+          <tbody>{rows.map((r) => { const done = r.status === "sent" || r.status === "received"; const isFulfil = r.pharmAction === "fulfil";
+            return (<tr key={r.id} style={{ borderBottom: `1px solid ${t.border}` }}>
+              <td style={td}>{r.confirmedAt || r.actionDate || today()}</td>
+              <td style={{ ...td, fontWeight: 600 }}>{r.item}</td>
+              <td style={{ ...td, textAlign: "right", fontWeight: 700 }}>{r.qty}</td>
+              <td style={td}><span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: t.textMuted }}>{r.source} <ArrowLeftRight size={12} /> {r.destCamp}</span></td>
+              <td style={{ ...td, color: t.textMuted }}>{r.fromPharmacist ? "💊" : "🩺"} {r.by}</td>
+              <td style={td}><span style={{ fontSize: 11, fontWeight: 700, color: isFulfil ? t.danger : t.success, background: isFulfil ? t.dangerSoft : t.successSoft, padding: "3px 9px", borderRadius: 12 }}>{isFulfil ? "Fulfil · deduct" : "Receive · add"}</span></td>
+              <td style={{ ...td, textAlign: "right" }}>{done
+                ? <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: isFulfil ? t.danger : t.success }}><Check size={13} /> {isFulfil ? `−${r.qty} deducted` : `+${r.qty} added`}</span>
+                : <button onClick={() => confirm(r)} style={{ ...btn(t), height: 32, fontSize: 12, background: isFulfil ? t.danger : t.success }}><Check size={13} /> Confirm {isFulfil ? "deduction" : "addition"}</button>}</td>
+            </tr>); })}</tbody>
+        </table>
+      </div></div>}
+  </div>);
+}
 function InventoryLog({ mode, allocatedCamp, role, userName }) {
-  const t = useT(); const { camps, dispensedMap, setBegin } = useApp(); const viewer = mode === "viewer";
+  const t = useT(); const { camps, dispensedMap, setBegin, invAdj } = useApp(); const viewer = mode === "viewer";
   const [rows, setRows] = useState(LOG_SEED); const [q, setQ] = useState(""); const [add, setAdd] = useState(false); const [report, setReport] = useState(false); const [flagFor, setFlagFor] = useState(null); const [counting, setCounting] = useState(false);
   // dispensed flows in from Daily dispensing: if a matching code exists for this camp, use that month total
   const dispOf = (r) => { const v = dispensedMap[`${allocatedCamp}|${r.code}`]; return v == null ? r.dispensed : v; };
-  const rem = (r) => r.begin + (r.received || 0) - dispOf(r) - r.moved; // balance = begin + received − dispensed − moved
+  const adjOf = (r) => (invAdj && invAdj[`${allocatedCamp}|${r.code}`]) || { recv: 0, mov: 0 }; // confirmed medical-request stock actions
+  const rem = (r) => { const a = adjOf(r); return r.begin + (r.received || 0) + a.recv - dispOf(r) - r.moved - a.mov; }; // balance = begin + received + reqReceived − dispensed − moved − reqMoved
   // month-end carry-forward: counted shelf balance becomes next month's beginning; received/dispensed/moved reset
   const carryForward = (counts) => setRows((p) => p.map((r) => { const c = counts[r.id]; const beginNext = c == null || c === "" ? rem(r) : Number(c); return { ...r, begin: Math.max(0, beginNext), received: 0, dispensed: 0, moved: 0, moveTo: "—", counted: null, date: today(), by: userName, at: nowT() }; }));
   const filtered = rows.filter((r) => q === "" || r.name.toLowerCase().includes(q.toLowerCase()) || r.batch.toLowerCase().includes(q.toLowerCase()) || r.code.includes(q));
@@ -1027,7 +1069,8 @@ function AddRow({ onClose, onSave }) {  const t = useT(); const [f, setF] = useS
   </Modal>);
 }
 function MonthReport({ rows, allocatedCamp, onClose }) {
-  const t = useT(); const [sent, setSent] = useState(false);
+  const t = useT(); const [sent, setSent] = useState(false); const { dispensedMap } = useApp();
+  const dispOf = (r) => { const v = dispensedMap[`${allocatedCamp}|${r.code}`]; return v == null ? r.dispensed : v; };
   const sums = useMemo(() => { const o = { Dispensed: 0 }; MOVE_TYPES.forEach((m) => o[m] = 0); rows.forEach((r) => { o.Dispensed += dispOf(r); if (MOVE_TYPES.includes(r.moveTo)) o[r.moveTo] += r.moved; }); return o; }, [rows, dispensedMap]);
   const [cats, setCats] = useState(() => Object.entries(sums).map(([k, v]) => ({ k, v }))); const [extra, setExtra] = useState("");
   const td = { padding: "8px 12px", fontSize: 13, borderBottom: `1px solid ${t.border}` };
@@ -1548,16 +1591,27 @@ const REQ_SEED = [
   { id: 2, type: "Store", item: "Insulin Glargine", batch: "#INS-0042", qty: 30, from: "Main store", to: "Al-Rayyan Field Clinic", by: "💊 Yaqeen", status: "pending" },
   { id: 3, type: "Store", item: "Paracetamol 500mg", batch: "#PAR-2025-A", qty: 500, from: "Main store", to: "Doha HQ", by: "💊 S. Hassan", status: "approved", actor: "You", time: "Today 09:02" },
 ];
+const MED_REQ_SEED = [
+  { id: 901, item: "Paracetamol 500mg", qty: 100, source: "Tariq Camp", destCamp: "Al-Rayyan Field Clinic", by: "Dr. Al-Thani", status: "approved", actor: "M. Obaidly", time: "Today 08:14", decidedAt: "Today 08:40" },
+  { id: 902, item: "Insulin Glargine", qty: 20, source: "Main store", destCamp: "Al-Rayyan Field Clinic", by: "Dr. Al-Thani", status: "pending", time: "Today 09:05" },
+];
 const ADMIN_REQ_SEED = [
   { id: 1, kind: "Change request", title: "Add a new camp to the South zone", detail: "Please create 'Al-Wakrah Clinic' and assign it to South.", by: "🏛️ M. Obaidly", status: "open", time: "Today 08:30" },
   { id: 2, kind: "Fix", title: "Correct a user's license number", detail: "Yaqeen's license should read PH-33910, not PH-33901.", by: "📋 Dalia & Asmaa", status: "open", time: "Yesterday" },
   { id: 3, kind: "Add", title: "Add 'Optometrist' as a medical profession option", detail: "Needed for the new eye clinic staff.", by: "🏛️ M. Obaidly", status: "done", time: "2 days ago" },
 ];
 function Approvals({ role }) {
-  const t = useT(); const { notify, me } = useApp();
+  const t = useT(); const { notify, me, medReqs, setMedReqStatus } = useApp();
   const isAdmin = role === "Admin";
   const [reqs, setReqs] = useState(REQ_SEED);
   const [adminReqs, setAdminReqs] = useState(ADMIN_REQ_SEED); const [compose, setCompose] = useState(false); const [editing, setEditing] = useState(null);
+  const medAct = (r, status) => {
+    setMedReqStatus(r.id, status, me?.name || "Management");
+    if (status === "approved") {
+      notify("Requests", ["Pharmacist"], `✅ Approved — SEND: please fulfil ${r.qty} × ${r.item} from ${r.source}${r.destCamp ? ` to ${r.destCamp}` : ""} (requested by ${r.by}).`);
+      if (r.destCamp && r.destCamp !== r.source) notify("Requests", ["Pharmacist"], `📥 Incoming to ${r.destCamp}: ${r.qty} × ${r.item} approved from ${r.source}. Expect this delivery.`);
+    } else notify("Requests", [r.fromPharmacist ? "Pharmacist" : "Medical"], `Your request for ${r.qty} × ${r.item} from ${r.source} was not approved.`);
+  };
   const act = (id, status) => setReqs((p) => p.map((r) => { if (r.id !== id) return r;
     notify("Approval", ["Store"], `${r.item} (${r.qty} units → ${r.to}) was ${status} by management. ${status === "approved" ? "Proceed with the exchange." : "Do not proceed."}`);
     return { ...r, status, actor: "You", time: "Just now" }; }));
@@ -1605,6 +1659,16 @@ function Approvals({ role }) {
     </tbody></table><div class="sig"><div>Requested by &amp; signature</div><div>Approved by &amp; signature</div></div>`, { camp: me?.camp, person: me?.name, mil: me?.mil, role: me?.role, extra: `${r.type} request` });
   return (<Page title="Approvals" subtitle="Transfer and store requests awaiting a decision." info="Approve or reject requests. Once actioned, a request locks to view-only so it can't be actioned twice; the audit trail records who decided and when. Use 'Request from Admin' to raise a fix/change with the administrator. Export any request to a signed PDF for physical records."
     action={<><ExportButton title="Transfer & store requests" build={() => ({ bodyHTML: `<table><thead><tr><th>Type</th><th>Item</th><th>Batch</th><th>Qty</th><th>From → To</th><th>By</th><th>Status</th></tr></thead><tbody>${reqs.map((r) => `<tr><td>${escapeHTML(r.type)}</td><td>${escapeHTML(r.item)}</td><td>${escapeHTML(r.batch)}</td><td>${r.qty}</td><td>${escapeHTML(r.from)} → ${escapeHTML(r.to)}</td><td>${escapeHTML(r.by)}</td><td>${escapeHTML(sc(r.status).l)}</td></tr>`).join("")}</tbody></table>`, text: `${reqs.length} request(s).` })} /><button onClick={() => setCompose(true)} style={btn(t, "ghost")}><Settings size={15} /> Request from Admin</button></>}>
+    {(medReqs || []).filter((r) => r.status === "pending").length > 0 && <div style={{ marginBottom: 18 }}>
+      <div style={{ ...ttl(t), marginBottom: 10 }}><Stethoscope size={16} color={t.accent} /> Item requests (medical & pharmacy)</div>
+      <div style={{ display: "grid", gap: 12 }}>{(medReqs || []).filter((r) => r.status === "pending").map((r) => (
+        <div key={r.id} style={{ ...card(t), borderLeft: `4px solid ${t.accent}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}><span style={{ fontSize: 15, fontWeight: 700 }}>{r.item}</span><span style={{ fontSize: 12, fontWeight: 700, color: t.warning, background: t.warningSoft, padding: "4px 12px", borderRadius: 20 }}>Pending</span></div>
+          <div style={{ fontSize: 12.5, color: t.textMuted, marginTop: 8, display: "flex", flexWrap: "wrap", gap: 12 }}><span>{r.qty} units</span><span>from <strong style={{ color: t.text }}>{r.source}</strong></span><span>by {r.fromPharmacist ? "💊" : "🩺"} {r.by}</span><span>{r.time}</span></div>
+          <div style={{ display: "flex", gap: 8, marginTop: 14 }}><button onClick={() => medAct(r, "approved")} style={btn(t)}><ThumbsUp size={15} /> Approve</button><button onClick={() => medAct(r, "rejected")} style={{ ...btn(t, "ghost"), color: t.danger, borderColor: t.danger + "55" }}><ThumbsDown size={15} /> Reject</button></div>
+          <div style={{ fontSize: 11.5, color: t.textMuted, marginTop: 10, display: "flex", alignItems: "center", gap: 6 }}><Info size={12} /> Approving notifies the pharmacist at {r.source} to fulfil it.</div>
+        </div>))}</div>
+    </div>}
     <div style={{ display: "grid", gap: 12 }}>{reqs.map((r) => { const s = sc(r.status), pending = r.status === "pending";
       return (<div key={r.id} style={card(t)}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 10.5, fontWeight: 700, color: r.type === "Store" ? t.accent : t.primary, background: t.primarySoft, padding: "2px 8px", borderRadius: 12 }}>{r.type}</span><span style={{ fontSize: 15, fontWeight: 700 }}>{r.item}</span></div><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><button onClick={() => exportOne(r)} title="Export PDF" aria-label="Export PDF" style={{ ...miniBtn(t), width: 30, height: 30, color: t.primary }}><FileText size={14} /></button><span style={{ fontSize: 12, fontWeight: 700, color: s.fg, background: s.bg, padding: "4px 12px", borderRadius: 20 }}>{s.l}</span></span></div>
         <div style={{ fontSize: 12.5, color: t.textMuted, marginTop: 8, display: "flex", flexWrap: "wrap", gap: 12 }}><span style={{ fontFamily: "monospace" }}>batch {r.batch}</span><span>{r.qty} units</span><span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>{r.from} <ArrowLeftRight size={12} /> {r.to}</span><span>by {r.by}</span></div>
@@ -2000,6 +2064,10 @@ function StoreTaskModal({ asLead, who, keepers, onClose, onSave }) {
 }
 /* Requests from camps to the main store — three types, notifies management & Sub-Manager */
 const REQ_TYPES = { monthly: { label: "Monthly demand", icon: CalendarDays, info: "Routine monthly bulk order for the camp's standard formulary." }, urgent: { label: "Urgent request", icon: AlertTriangle, info: "Time-critical need — flagged for fast approval." }, request: { label: "Request from store", icon: PackagePlus, info: "One-off request for a specific item and quantity." } };
+const STORE_REQ_SEED = [
+  { id: 8801, type: "urgent", camp: "Al-Udeid Clinic", by: "Yaqeen", status: "pending", time: "Today 08:05", lines: [{ item: "Insulin Glargine", prev: 40, qty: 30, note: "Cold-chain — running low" }] },
+  { id: 8802, type: "monthly", camp: "Tariq Camp", by: "Yaqeen", status: "pending", time: "Yesterday", lines: [{ item: "Paracetamol 500mg", prev: 1000, qty: 1200, note: "" }, { item: "Augmentin 1000mg", prev: 1500, qty: 2000, note: "Winter demand" }, { item: "Metformin 850mg", prev: 400, qty: 500, note: "New chronic pts" }] },
+];
 /* signature: upload an image, or sign manually by typing the name as a script signature */
 function SignatureField({ value, onChange, label }) {
   const t = useT(); const ref = useRef(null);
@@ -2018,11 +2086,13 @@ function SignatureField({ value, onChange, label }) {
   </div>);
 }
 function StoreRequest({ allocatedCamp, role, userName }) {
-  const t = useT(); const { me } = useApp();
+  const t = useT(); const { me, camps, addMedReq, notify, medReqs, patchMedReq, addStoreReq } = useApp();
+  const th = { padding: "10px 11px", fontSize: 11.5, fontWeight: 600, color: "#C6D6E8", whiteSpace: "nowrap", borderBottom: `1px solid ${t.border}` };
+  const td = { padding: "9px 11px", fontSize: 13, borderBottom: `1px solid ${t.border}`, verticalAlign: "top" };
+  const [tab, setTab] = useState("store");
   const [reqs, setReqs] = useState([
     { id: 1, type: "urgent", item: "Insulin Glargine", qty: 30, status: "approved", by: userName, sig: { typed: userName }, approver: "M. Obaidly", approverSig: { typed: "M. Obaidly" } },
-    { id: 2, type: "monthly", item: "Augmentin 1000mg", qty: 2000, status: "pending", by: userName, sig: { typed: userName } },
-    { id: 3, type: "request", item: "Paracetamol 500mg", qty: 500, status: "dispatched", by: userName, sig: { typed: userName }, approver: "Dalia & Asmaa", approverSig: { typed: "Dalia & Asmaa" } },
+    { id: 2, type: "monthly", item: "Monthly demand · 3 items", qty: 0, lines: [{ item: "Augmentin 1000mg", prev: 1500, qty: 2000, note: "Higher winter demand" }, { item: "Paracetamol 500mg", prev: 1000, qty: 1200, note: "" }, { item: "Metformin 850mg", prev: 400, qty: 500, note: "New chronic patients" }], status: "pending", by: userName, sig: { typed: userName } },
   ]);
   const [modal, setModal] = useState(null);
   const canApprove = role === "Management" || role === "Sub-Manager";
@@ -2030,27 +2100,170 @@ function StoreRequest({ allocatedCamp, role, userName }) {
   const tc = (type) => type === "urgent" ? { fg: t.danger, bg: t.dangerSoft } : type === "monthly" ? { fg: t.accent, bg: t.primarySoft } : { fg: t.primary, bg: t.primarySoft };
   const approve = (id, sig) => setReqs((p) => p.map((r) => r.id === id ? { ...r, status: "approved", approver: userName, approverSig: sig } : r));
   const sigText = (s) => s?.typed ? s.typed : s?.img ? "[signed — image on file]" : "—";
-  const exportOne = (r) => exportPDF(`${REQ_TYPES[r.type].label} — ${r.item}`, `<table><tbody>
-      <tr><th style="width:160px">Type</th><td>${escapeHTML(REQ_TYPES[r.type].label)}</td></tr><tr><th>Item</th><td>${escapeHTML(r.item)}</td></tr><tr><th>Quantity</th><td>${r.qty.toLocaleString()} units</td></tr>
-      <tr><th>Destination</th><td>Main store → ${escapeHTML(allocatedCamp)}</td></tr><tr><th>Status</th><td>${escapeHTML(sc(r.status).l)}</td></tr>
-    </tbody></table><div class="sig"><div>Requested by: ${escapeHTML(r.by || "")}<br><br><i>${escapeHTML(sigText(r.sig))}</i></div><div>Approved by: ${escapeHTML(r.approver || "")}<br><br><i>${escapeHTML(sigText(r.approverSig))}</i></div></div>`, { camp: allocatedCamp, person: me?.name, mil: me?.mil, role: me?.role, extra: REQ_TYPES[r.type].label });
-  return (<Page title="Request from store" subtitle={`Order bulk stock from the main store to ${allocatedCamp}.`}
-    info="Three request types: Monthly demand, Urgent request, and a one-off Request. Each is signed by the requester and notifies management and Sub-Manager; on approval the approver signs too. Signatures can be uploaded as an image or signed manually. Export any request to a signed PDF for physical records."
-    action={<div style={{ display: "flex", gap: 8 }}>{Object.entries(REQ_TYPES).map(([k, m]) => { const Icon = m.icon; return <button key={k} onClick={() => setModal(k)} style={btn(t, k === "monthly" ? "primary" : "ghost")}><Icon size={15} /> {m.label}</button>; })}</div>}>
-    <div style={{ display: "grid", gap: 10 }}>{reqs.map((r) => { const s = sc(r.status); const c = tc(r.type); const Icon = REQ_TYPES[r.type].icon;
-      return (<div key={r.id} style={card(t)}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 700, color: c.fg, background: c.bg, padding: "2px 8px", borderRadius: 12 }}><Icon size={11} /> {REQ_TYPES[r.type].label}</span><span style={{ fontSize: 14, fontWeight: 600 }}>{r.item}</span></div>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><button onClick={() => exportOne(r)} title="Export PDF" aria-label="Export PDF" style={{ ...miniBtn(t), width: 30, height: 30, color: t.primary }}><FileText size={14} /></button><span style={{ fontSize: 12, fontWeight: 700, color: s.fg, background: s.bg, padding: "4px 11px", borderRadius: 20 }}>{s.l}</span></span></div>
-        <div style={{ fontSize: 12.5, color: t.textMuted, marginTop: 7 }}>{r.qty.toLocaleString()} units · Main store → {allocatedCamp}</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 8, fontSize: 11.5, color: t.textMuted, alignItems: "center" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Pencil size={12} /> Requested by {r.by} {r.sig?.typed ? <em style={{ fontFamily: SCRIPT, fontSize: 16, color: t.text, marginLeft: 2 }}>{r.sig.typed}</em> : r.sig?.img ? <img src={r.sig.img} alt="sig" style={{ height: 20, marginLeft: 2, background: "#fff", borderRadius: 3, padding: 1 }} /> : "—"}</span>
-          {r.approver && <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: t.success }}><Check size={12} /> Approved by {r.approver} {r.approverSig?.typed ? <em style={{ fontFamily: SCRIPT, fontSize: 16, marginLeft: 2 }}>{r.approverSig.typed}</em> : r.approverSig?.img ? <img src={r.approverSig.img} alt="sig" style={{ height: 20, marginLeft: 2, background: "#fff", borderRadius: 3, padding: 1 }} /> : ""}</span>}
-          {canApprove && r.status === "pending" && <button onClick={() => setModal({ approveId: r.id })} style={{ ...btn(t), height: 28, fontSize: 11.5 }}><Check size={12} /> Approve & sign</button>}
-        </div>
-      </div>); })}</div>
+  const myCampReqs = (medReqs || []).filter((r) => r.fromPharmacist);
+  const allocated = allocatedCamp;
+  const toFulfil = (medReqs || []).filter((r) => r.status === "approved" && !r.pharmAction && r.source === allocated && r.destCamp && r.destCamp !== r.source);
+  const toReceive = (medReqs || []).filter((r) => r.status === "approved" && !r.pharmAction && r.destCamp === allocated && r.source !== allocated);
+  const tabs = [{ k: "store", label: "Request from store", icon: PackagePlus }, { k: "camp", label: "Request from camp/clinic", icon: Building2 }, { k: "fulfil", label: "To fulfil / receive", icon: PackageCheck }];
+  const exportOne = (r) => exportPDF(`${r.type === "monthly" ? "Monthly demand" : REQ_TYPES[r.type].label} — ${r.item}`, r.lines
+    ? `<table><thead><tr><th>Medication</th><th>Prev. received</th><th>Requested</th><th>Note</th></tr></thead><tbody>${r.lines.map((l) => `<tr><td>${escapeHTML(l.item)}</td><td>${l.prev}</td><td>${l.qty}</td><td>${escapeHTML(l.note || "")}</td></tr>`).join("")}</tbody></table><div class="sig"><div>Requested by: ${escapeHTML(r.by || "")}<br><br><i>${escapeHTML(sigText(r.sig))}</i></div><div>Approved by: ${escapeHTML(r.approver || "")}<br><br><i>${escapeHTML(sigText(r.approverSig))}</i></div></div>`
+    : `<table><tbody><tr><th style="width:160px">Type</th><td>${escapeHTML(REQ_TYPES[r.type].label)}</td></tr><tr><th>Item</th><td>${escapeHTML(r.item)}</td></tr><tr><th>Quantity</th><td>${(r.qty || 0).toLocaleString()} units</td></tr><tr><th>Destination</th><td>Main store → ${escapeHTML(allocatedCamp)}</td></tr><tr><th>Status</th><td>${escapeHTML(sc(r.status).l)}</td></tr></tbody></table><div class="sig"><div>Requested by: ${escapeHTML(r.by || "")}<br><br><i>${escapeHTML(sigText(r.sig))}</i></div><div>Approved by: ${escapeHTML(r.approver || "")}<br><br><i>${escapeHTML(sigText(r.approverSig))}</i></div></div>`, { camp: allocatedCamp, person: me?.name, mil: me?.mil, role: me?.role, extra: r.type === "monthly" ? "Monthly demand" : REQ_TYPES[r.type].label });
+  return (<Page title="My requests" subtitle={`Order stock to ${allocatedCamp} — from the main store or another camp/clinic.`}
+    info="Two ways to request stock: a monthly demand to the main store (add many medications in one table), or a transfer request from another camp/clinic. Both go to Management/Sub-management for approval. Camp transfers notify the source camp's pharmacist on approval.">
+    <div style={{ display: "inline-flex", gap: 4, padding: 4, borderRadius: 999, background: t.surfaceAlt, border: `1px solid ${t.border}`, marginBottom: 16, flexWrap: "wrap" }}>
+      {tabs.map((x) => { const on = tab === x.k; const Ic = x.icon;
+        return (<button key={x.k} onClick={() => setTab(x.k)} style={{ display: "inline-flex", alignItems: "center", gap: 7, height: 38, padding: "0 18px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 700, background: on ? t.primary : "transparent", color: on ? "#fff" : t.textMuted, boxShadow: on ? "0 3px 10px rgba(45,125,210,0.28)" : "none", transition: "all .15s" }}><Ic size={15} /> {x.label}</button>); })}
+    </div>
+
+    {tab === "store" ? (<>
+      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+        <button onClick={() => setModal("monthly")} style={btn(t)}><CalendarDays size={15} /> New monthly demand</button>
+        <button onClick={() => setModal("urgent")} style={btn(t, "ghost")}><AlertTriangle size={15} /> Urgent request</button>
+      </div>
+      <div style={{ display: "grid", gap: 10 }}>{reqs.map((r) => { const s = sc(r.status); const c = tc(r.type); const Icon = r.type === "monthly" ? CalendarDays : REQ_TYPES[r.type].icon;
+        return (<div key={r.id} style={card(t)}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 700, color: c.fg, background: c.bg, padding: "2px 8px", borderRadius: 12 }}><Icon size={11} /> {r.type === "monthly" ? "Monthly demand" : REQ_TYPES[r.type].label}</span><span style={{ fontSize: 14, fontWeight: 600 }}>{r.item}</span></div>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><button onClick={() => exportOne(r)} title="Export PDF" aria-label="Export PDF" style={{ ...miniBtn(t), width: 30, height: 30, color: t.primary }}><FileText size={14} /></button><span style={{ fontSize: 12, fontWeight: 700, color: s.fg, background: s.bg, padding: "4px 11px", borderRadius: 20 }}>{s.l}</span></span></div>
+          {r.lines ? (<div style={{ marginTop: 10, overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 420 }}>
+            <thead><tr style={{ background: t.head }}><th style={{ ...th, textAlign: "left" }}>Medication</th><th style={{ ...th, textAlign: "right" }}>Prev. received</th><th style={{ ...th, textAlign: "right" }}>Requested</th><th style={{ ...th, textAlign: "left" }}>Note</th></tr></thead>
+            <tbody>{r.lines.map((l, i) => (<tr key={i} style={{ borderBottom: `1px solid ${t.border}` }}><td style={td}>{l.item}</td><td style={{ ...td, textAlign: "right" }}>{l.prev}</td><td style={{ ...td, textAlign: "right", fontWeight: 700 }}>{l.qty}</td><td style={{ ...td, color: t.textMuted }}>{l.note || "—"}</td></tr>))}</tbody>
+          </table></div>) : (<div style={{ fontSize: 12.5, color: t.textMuted, marginTop: 7 }}>{(r.qty || 0).toLocaleString()} units · Main store → {allocatedCamp}</div>)}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 10, fontSize: 11.5, color: t.textMuted, alignItems: "center" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Pencil size={12} /> Requested by {r.by} {r.sig?.typed ? <em style={{ fontFamily: SCRIPT, fontSize: 16, color: t.text, marginLeft: 2 }}>{r.sig.typed}</em> : ""}</span>
+            {r.approver && <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: t.success }}><Check size={12} /> Approved by {r.approver} {r.approverSig?.typed ? <em style={{ fontFamily: SCRIPT, fontSize: 16, marginLeft: 2 }}>{r.approverSig.typed}</em> : ""}</span>}
+            {canApprove && r.status === "pending" && <button onClick={() => setModal({ approveId: r.id })} style={{ ...btn(t), height: 28, fontSize: 11.5 }}><Check size={12} /> Approve & sign</button>}
+          </div>
+        </div>); })}</div>
+    </>) : tab === "camp" ? (<>
+      <div style={{ marginBottom: 14 }}><button onClick={() => setModal("camp")} style={btn(t)}><Plus size={15} /> Request from a camp/clinic</button></div>
+      {myCampReqs.length === 0
+        ? <div style={{ ...card(t), textAlign: "center", color: t.textMuted, fontSize: 13.5, padding: "30px 16px" }}>No camp/clinic requests yet. Tap the button above to request stock from another camp or clinic.</div>
+        : <div style={{ display: "grid", gap: 10 }}>{myCampReqs.map((r) => { const s = sc(r.status === "pending" ? "pending" : r.status); 
+          return (<div key={r.id} style={{ ...card(t), borderLeft: `4px solid ${t.primary}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}><span style={{ fontSize: 14, fontWeight: 700 }}>{r.item}</span><span style={{ fontSize: 12, fontWeight: 700, color: s.fg, background: s.bg, padding: "4px 11px", borderRadius: 20 }}>{s.l}</span></div>
+            <div style={{ fontSize: 12.5, color: t.textMuted, marginTop: 7, display: "flex", flexWrap: "wrap", gap: 12 }}><span>{r.qty} units</span><span>from <strong style={{ color: t.text }}>{r.source}</strong></span><span>{r.time}</span></div>
+            {r.status === "approved" && <div style={{ fontSize: 11.5, color: t.success, marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}><CheckCircle2 size={13} /> Pharmacist at {r.source} notified to fulfil.</div>}
+          </div>); })}</div>}
+    </>) : (<>
+      <div style={{ fontSize: 12.5, color: t.textMuted, marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}><Info size={13} /> Approved transfers needing your decision at {allocated}. Choosing Fulfil or Receive sends it to the “Medical Req. stocks” log to confirm the stock change. Decline = no change.</div>
+      {(toFulfil.length === 0 && toReceive.length === 0)
+        ? <div style={{ ...card(t), textAlign: "center", color: t.textMuted, fontSize: 13.5, padding: "30px 16px" }}>Nothing awaiting your decision. Approved transfers involving your location will appear here.</div>
+        : <div style={{ display: "grid", gap: 14 }}>
+          {toFulfil.length > 0 && <div>
+            <div style={{ ...ttl(t), marginBottom: 8 }}><PackageCheck size={16} color={t.primary} /> To send / fulfil</div>
+            <div style={{ display: "grid", gap: 10 }}>{toFulfil.map((r) => (<div key={r.id} style={{ ...card(t), borderLeft: `4px solid ${t.primary}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}><span style={{ fontSize: 14.5, fontWeight: 700 }}>{r.item}</span><span style={{ fontSize: 12, fontWeight: 700, color: t.warning, background: t.warningSoft, padding: "4px 11px", borderRadius: 20 }}>Decide</span></div>
+              <div style={{ fontSize: 12.5, color: t.textMuted, marginTop: 8, display: "flex", flexWrap: "wrap", gap: 12 }}><span>{r.qty} units</span><span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>{r.source} <ArrowLeftRight size={12} /> {r.destCamp}</span></div>
+              <div style={{ fontSize: 11.5, color: t.textMuted, marginTop: 6 }}>Requested by {r.fromPharmacist ? "💊" : "🩺"} {r.by} · Approved by {r.actor || "management"}{r.decidedAt ? ` · ${r.decidedAt}` : ""}</div>
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <button onClick={() => { patchMedReq(r.id, { pharmAction: "fulfil", actionDate: today() }); notify("Requests", ["Pharmacist"], `📦 ${r.qty} × ${r.item} accepted to fulfil from ${r.source}. Confirm the deduction in Logs → Medical Req. stocks.`); }} style={btn(t)}><PackageCheck size={15} /> Fulfil</button>
+                <button onClick={() => { patchMedReq(r.id, { status: "declined", actor: me?.name }); notify("Requests", ["Medical", "Management"], `${r.item} request from ${r.source} was declined by the pharmacist. No stock moved.`); }} style={{ ...btn(t, "ghost"), color: t.danger, borderColor: t.danger + "55" }}><X size={15} /> Decline</button>
+              </div>
+            </div>))}</div>
+          </div>}
+          {toReceive.length > 0 && <div>
+            <div style={{ ...ttl(t), marginBottom: 8 }}><Download size={16} color={t.success} /> To receive</div>
+            <div style={{ display: "grid", gap: 10 }}>{toReceive.map((r) => (<div key={r.id} style={{ ...card(t), borderLeft: `4px solid ${t.success}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}><span style={{ fontSize: 14.5, fontWeight: 700 }}>{r.item}</span><span style={{ fontSize: 12, fontWeight: 700, color: t.warning, background: t.warningSoft, padding: "4px 11px", borderRadius: 20 }}>Decide</span></div>
+              <div style={{ fontSize: 12.5, color: t.textMuted, marginTop: 8, display: "flex", flexWrap: "wrap", gap: 12 }}><span>{r.qty} units</span><span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>{r.source} <ArrowLeftRight size={12} /> {r.destCamp}</span></div>
+              <div style={{ fontSize: 11.5, color: t.textMuted, marginTop: 6 }}>Requested by {r.fromPharmacist ? "💊" : "🩺"} {r.by} · Approved by {r.actor || "management"}</div>
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <button onClick={() => { patchMedReq(r.id, { pharmAction: "receive", actionDate: today() }); notify("Requests", ["Pharmacist"], `📥 ${r.qty} × ${r.item} accepted to receive at ${r.destCamp}. Confirm the addition in Logs → Medical Req. stocks.`); }} style={{ ...btn(t), background: t.success }}><Download size={15} /> Receive</button>
+                <button onClick={() => { patchMedReq(r.id, { status: "declined", actor: me?.name }); notify("Requests", ["Medical", "Management"], `${r.item} delivery to ${r.destCamp} was declined by the pharmacist. No stock added.`); }} style={{ ...btn(t, "ghost"), color: t.danger, borderColor: t.danger + "55" }}><X size={15} /> Decline</button>
+              </div>
+            </div>))}</div>
+          </div>}
+        </div>}
+    </>)}
+
+    {modal === "monthly" && <MonthlyDemandModal type="monthly" allocatedCamp={allocatedCamp} userName={userName} onClose={() => setModal(null)} onSave={(r) => { setReqs((p) => [{ ...r, id: Date.now(), status: "pending", by: userName }, ...p]); addStoreReq({ type: "monthly", camp: allocatedCamp, by: userName, lines: r.lines }); notify("Requests", ["Management", "Sub-Manager", "Store"], `💊 ${userName} submitted a monthly demand (${r.lines.length} items) for ${allocatedCamp}.`); setModal(null); }} />}
+    {modal === "urgent" && <MonthlyDemandModal type="urgent" allocatedCamp={allocatedCamp} userName={userName} onClose={() => setModal(null)} onSave={(r) => { setReqs((p) => [{ ...r, id: Date.now(), status: "pending", by: userName }, ...p]); addStoreReq({ type: "urgent", camp: allocatedCamp, by: userName, lines: r.lines }); notify("Requests", ["Management", "Sub-Manager", "Store"], `🚨 URGENT: ${userName} submitted an urgent request (${r.lines.length} items) for ${allocatedCamp}.`); setModal(null); }} />}
+    {modal === "camp" && <CampRequestModal camps={(camps || []).filter((c) => c !== allocatedCamp)} userName={userName} onClose={() => setModal(null)} onSave={(r) => { addMedReq({ item: r.item, qty: r.qty, source: r.source, by: userName, fromPharmacist: true, destCamp: allocatedCamp }); notify("Requests", ["Management", "Sub-Manager"], `💊 ${userName} requests ${r.qty} × ${r.item} from ${r.source}. Awaiting your approval.`); setModal(null); }} />}
     {modal && modal.approveId && <ApproveSignModal onClose={() => setModal(null)} onSave={(sig) => { approve(modal.approveId, sig); setModal(null); }} />}
-    {modal && !modal.approveId && <StoreReqModal type={modal} allocatedCamp={allocatedCamp} userName={userName} onClose={() => setModal(null)} onSave={(r) => { setReqs((p) => [{ ...r, id: Date.now(), status: "pending", by: userName }, ...p]); setModal(null); }} />}
+  </Page>);
+}
+function MonthlyDemandModal({ type = "monthly", allocatedCamp, userName, onClose, onSave }) {
+  const t = useT(); const [rows, setRows] = useState([{ item: STORE_STOCK_SEED[0].name, prev: "", qty: "", note: "" }]); const [sig, setSig] = useState({ typed: userName });
+  const urgent = type === "urgent";
+  const th = { padding: "9px 8px", fontSize: 11, fontWeight: 600, color: "#C6D6E8", whiteSpace: "nowrap", borderBottom: `1px solid ${t.border}` };
+  const fld = { width: "100%", height: 38, borderRadius: 8, border: `1px solid ${t.border}`, background: t.surfaceAlt, color: t.text, fontSize: 13, padding: "0 8px", outline: "none", boxSizing: "border-box" };
+  const setRow = (i, k, v) => setRows((p) => p.map((r, j) => j === i ? { ...r, [k]: v } : r));
+  const addRow = () => setRows((p) => [...p, { item: STORE_STOCK_SEED[0].name, prev: "", qty: "", note: "" }]);
+  const delRow = (i) => setRows((p) => p.length > 1 ? p.filter((_, j) => j !== i) : p);
+  const valid = rows.every((r) => r.item && r.qty) && rows.length > 0;
+  const submit = () => { const lines = rows.map((r) => ({ item: r.item, prev: Number(r.prev) || 0, qty: Number(r.qty) || 0, note: r.note })); onSave({ type, item: `${urgent ? "Urgent request" : "Monthly demand"} · ${lines.length} item${lines.length > 1 ? "s" : ""}`, lines, sig }); };
+  return (<Modal title={urgent ? "Urgent request" : "Monthly demand"} icon={urgent ? AlertTriangle : CalendarDays} onClose={onClose} width={620}>
+    <div style={{ fontSize: 12.5, color: t.textMuted, marginBottom: 14 }}>{urgent ? "Add each medication urgently needed — flagged for fast handling." : "Add each medication you need this month."} Submitted as one request to the main store for {allocatedCamp}.</div>
+    <div style={{ overflowX: "auto", marginBottom: 12 }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 540 }}>
+      <thead><tr style={{ background: t.head }}><th style={{ ...th, textAlign: "left" }}>Medication</th><th style={{ ...th, textAlign: "right", width: 110 }}>Prev. received</th><th style={{ ...th, textAlign: "right", width: 90 }}>Requested</th><th style={{ ...th, textAlign: "left" }}>Note</th><th style={{ ...th, width: 36 }}></th></tr></thead>
+      <tbody>{rows.map((r, i) => (<tr key={i} style={{ borderBottom: `1px solid ${t.border}` }}>
+        <td style={{ padding: 5 }}><select value={r.item} onChange={(e) => setRow(i, "item", e.target.value)} style={fld}>{STORE_STOCK_SEED.map((s) => <option key={s.code}>{s.name}</option>)}</select></td>
+        <td style={{ padding: 5 }}><input type="number" value={r.prev} onChange={(e) => setRow(i, "prev", e.target.value)} style={{ ...fld, textAlign: "right" }} placeholder="0" /></td>
+        <td style={{ padding: 5 }}><input type="number" value={r.qty} onChange={(e) => setRow(i, "qty", e.target.value)} style={{ ...fld, textAlign: "right" }} placeholder="0" /></td>
+        <td style={{ padding: 5 }}><input value={r.note} onChange={(e) => setRow(i, "note", e.target.value)} style={fld} placeholder="optional" /></td>
+        <td style={{ padding: 5, textAlign: "center" }}><button onClick={() => delRow(i)} aria-label="Remove" style={{ ...miniBtn(t), width: 28, height: 28, color: t.danger }}><X size={13} /></button></td>
+      </tr>))}</tbody>
+    </table></div>
+    <button onClick={addRow} style={{ ...btn(t, "ghost"), height: 36, fontSize: 12.5, marginBottom: 16 }}><Plus size={14} /> Add medication</button>
+    <div style={{ marginBottom: 16 }}><SignatureField value={sig} onChange={setSig} label="Your signature (requester)" /></div>
+    <div style={{ background: t.surfaceAlt, borderRadius: 10, padding: "10px 12px", marginBottom: 18, fontSize: 12, color: t.textMuted, display: "flex", alignItems: "center", gap: 6 }}><Bell size={13} color={t.primary} /> Notifies 🏛️ management and 📋 Sub-Manager for approval, then the store prepares it.</div>
+    <button onClick={submit} disabled={!valid} style={{ ...btn(t), width: "100%", height: 46, justifyContent: "center", opacity: valid ? 1 : 0.5, background: urgent ? t.danger : t.primary }}><Send size={16} /> Submit {urgent ? "urgent request" : "monthly demand"}</button>
+  </Modal>);
+}
+function CampRequestModal({ camps, userName, onClose, onSave }) {
+  const t = useT(); const [f, setF] = useState({ item: STORE_STOCK_SEED[0].name, qty: "", source: (camps && camps[0]) || "" });
+  const fld = { width: "100%", height: 42, borderRadius: 9, border: `1px solid ${t.border}`, background: t.surfaceAlt, color: t.text, fontSize: 14, padding: "0 12px", outline: "none", boxSizing: "border-box" };
+  const lab = { fontSize: 12, color: t.textMuted, fontWeight: 600, marginBottom: 5, display: "block" };
+  const v = f.item && f.qty && f.source;
+  return (<Modal title="Request from camp/clinic" icon={Building2} onClose={onClose}>
+    <div style={{ fontSize: 12.5, color: t.textMuted, marginBottom: 14 }}>Request a transfer from another camp or clinic. Goes to Management/Sub for approval; on approval the source pharmacist is notified.</div>
+    <label style={lab}>Medication</label><select value={f.item} onChange={(e) => setF({ ...f, item: e.target.value })} style={{ ...fld, marginBottom: 14 }}>{STORE_STOCK_SEED.map((s) => <option key={s.code}>{s.name}</option>)}</select>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 12, marginBottom: 14 }}>
+      <div><label style={lab}>Quantity</label><input type="number" value={f.qty} autoFocus onChange={(e) => setF({ ...f, qty: e.target.value })} style={fld} placeholder="0" /></div>
+      <div><label style={lab}>From camp/clinic</label><select value={f.source} onChange={(e) => setF({ ...f, source: e.target.value })} style={fld}>{camps.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+    </div>
+    <button onClick={() => onSave({ item: f.item, qty: Number(f.qty), source: f.source })} disabled={!v} style={{ ...btn(t), width: "100%", height: 46, justifyContent: "center", opacity: v ? 1 : 0.5 }}><Send size={16} /> Submit request</button>
+  </Modal>);
+}
+function StoreRequests({ userName }) {
+  const t = useT(); const { storeReqs, patchStoreReq, notify } = useApp();
+  const th = { padding: "10px 11px", fontSize: 11.5, fontWeight: 600, color: "#C6D6E8", whiteSpace: "nowrap", borderBottom: `1px solid ${t.border}`, textAlign: "left" };
+  const td = { padding: "9px 11px", fontSize: 13, borderBottom: `1px solid ${t.border}`, verticalAlign: "top" };
+  const sc = (s) => s === "fulfilled" ? { fg: t.success, bg: t.successSoft, l: "Fulfilled" } : s === "declined" ? { fg: t.danger, bg: t.dangerSoft, l: "Declined" } : { fg: t.warning, bg: t.warningSoft, l: "Pending" };
+  const pending = (storeReqs || []).filter((r) => r.status === "pending");
+  const decided = (storeReqs || []).filter((r) => r.status !== "pending");
+  const fulfil = (r) => { patchStoreReq(r.id, { status: "fulfilled", actor: userName, decidedAt: today() }); notify("Store", ["Pharmacist"], `📦 Your ${r.type === "urgent" ? "urgent request" : "monthly demand"} (${r.lines.length} item${r.lines.length > 1 ? "s" : ""}) for ${r.camp} has been fulfilled and dispatched from the main store.`); };
+  const decline = (r) => { patchStoreReq(r.id, { status: "declined", actor: userName, decidedAt: today() }); notify("Store", ["Pharmacist"], `Your ${r.type === "urgent" ? "urgent request" : "monthly demand"} for ${r.camp} was declined by the store.`); };
+  const Card = ({ r, actionable }) => { const s = sc(r.status); const urgent = r.type === "urgent";
+    return (<div style={{ ...card(t), borderLeft: `4px solid ${urgent ? t.danger : t.primary}` }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 700, color: urgent ? t.danger : t.accent, background: urgent ? t.dangerSoft : t.primarySoft, padding: "2px 9px", borderRadius: 12 }}>{urgent ? <AlertTriangle size={11} /> : <CalendarDays size={11} />} {urgent ? "Urgent request" : "Monthly demand"}</span><span style={{ fontSize: 14.5, fontWeight: 700 }}>{r.camp}</span></div>
+        <span style={{ fontSize: 12, fontWeight: 700, color: s.fg, background: s.bg, padding: "4px 11px", borderRadius: 20 }}>{s.l}</span>
+      </div>
+      <div style={{ fontSize: 11.5, color: t.textMuted, marginTop: 6 }}>by 💊 {r.by} · {r.time}{r.actor ? ` · ${r.status === "fulfilled" ? "fulfilled" : "declined"} by ${r.actor}` : ""}</div>
+      <div style={{ overflowX: "auto", marginTop: 10 }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 420 }}>
+        <thead><tr style={{ background: t.head }}><th style={th}>Medication</th><th style={{ ...th, textAlign: "right" }}>Prev. received</th><th style={{ ...th, textAlign: "right" }}>Requested</th><th style={th}>Note</th></tr></thead>
+        <tbody>{r.lines.map((l, i) => (<tr key={i} style={{ borderBottom: `1px solid ${t.border}` }}><td style={td}>{l.item}</td><td style={{ ...td, textAlign: "right" }}>{l.prev}</td><td style={{ ...td, textAlign: "right", fontWeight: 700 }}>{l.qty}</td><td style={{ ...td, color: t.textMuted }}>{l.note || "—"}</td></tr>))}</tbody>
+      </table></div>
+      {actionable && <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <button onClick={() => fulfil(r)} style={btn(t)}><PackageCheck size={15} /> Fulfil & dispatch</button>
+        <button onClick={() => decline(r)} style={{ ...btn(t, "ghost"), color: t.danger, borderColor: t.danger + "55" }}><X size={15} /> Decline</button>
+      </div>}
+    </div>);
+  };
+  return (<Page title="Requests" subtitle="Monthly demands and urgent requests from camps — fulfil or decline."
+    info="All store requests submitted by camp pharmacists. Fulfil to dispatch the stock (notifies the requesting pharmacist) or decline. Urgent requests are flagged in red.">
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 16 }}>
+      <Metric label="Pending" value={pending.length} tone="warning" />
+      <Metric label="Urgent pending" value={pending.filter((r) => r.type === "urgent").length} tone="danger" />
+      <Metric label="Fulfilled" value={(storeReqs || []).filter((r) => r.status === "fulfilled").length} tone="success" />
+    </div>
+    {pending.length === 0
+      ? <div style={{ ...card(t), textAlign: "center", color: t.textMuted, fontSize: 13.5, padding: "30px 16px" }}>No pending requests. Camp monthly demands and urgent requests will appear here.</div>
+      : <div style={{ display: "grid", gap: 12 }}>{pending.map((r) => <Card key={r.id} r={r} actionable />)}</div>}
+    {decided.length > 0 && <><div style={{ ...ttl(t), margin: "22px 0 10px" }}><Clock size={16} color={t.textMuted} /> History</div>
+      <div style={{ display: "grid", gap: 12 }}>{decided.map((r) => <Card key={r.id} r={r} />)}</div></>}
   </Page>);
 }
 function ApproveSignModal({ onClose, onSave }) {
@@ -2106,11 +2319,44 @@ function ReqModal({ item, camps, onClose }) {
     {from === to && <p style={{ fontSize: 11.5, color: t.danger, textAlign: "center", margin: "8px 0 0" }}>Source and destination must differ.</p>}
   </Modal>);
 }
-function MyRequests() {
-  const t = useT(); const data = [{ item: "Augmentin 1000mg", qty: 50, from: "Tariq Camp", to: "Al-Udeid Clinic", status: "approved", who: "📋 Dalia & Asmaa", time: "Today 08:14" }, { item: "Insulin Glargine", qty: 10, from: "Doha HQ", to: "Al-Rayyan Field Clinic", status: "pending", who: "—", time: "Today 07:50" }];
-  return (<Page title="My requests" subtitle="Your transfer requests. Locked to view-only once a decision is made.">
-    <div style={{ display: "grid", gap: 10 }}>{data.map((r, i) => { const s = { approved: { fg: t.success, bg: t.successSoft, l: "Approved" }, pending: { fg: t.warning, bg: t.warningSoft, l: "Pending" }, rejected: { fg: t.danger, bg: t.dangerSoft, l: "Rejected" } }[r.status];
-      return (<div key={i} style={card(t)}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><span style={{ fontSize: 14, fontWeight: 600 }}>{r.item}</span><span style={{ fontSize: 12, fontWeight: 700, color: s.fg, background: s.bg, padding: "4px 11px", borderRadius: 20 }}>{s.l}</span></div><div style={{ fontSize: 12.5, color: t.textMuted, marginTop: 7, display: "flex", alignItems: "center", gap: 6 }}>{r.qty} units · {r.from} <ArrowLeftRight size={12} /> {r.to}</div><div style={{ fontSize: 11.5, color: t.textMuted, marginTop: 3 }}>{r.status === "pending" ? "Awaiting approval" : `By ${r.who}`} · {r.time}</div></div>); })}</div>
+const REQ_MEDS = ["Paracetamol 500mg", "Augmentin 1000mg", "Insulin Glargine", "Ceftriaxone 1g", "Morphine sulfate 10mg", "Metformin 850mg", "Amoxicillin 500mg", "Omeprazole 20mg"];
+function MyRequests({ userName, allocatedCamp }) {
+  const t = useT(); const { medReqs, addMedReq, notify, camps } = useApp();
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({ item: REQ_MEDS[0], qty: 1, source: "Main store" });
+  const sources = ["Main store", ...(camps || [])];
+  const mine = (medReqs || []).filter((r) => !r.fromPharmacist && (r.by === userName || r.by === "Dr. Al-Thani"));
+  const submit = () => {
+    if (!f.item || !f.qty || f.qty < 1) return;
+    addMedReq({ item: f.item, qty: Number(f.qty), source: f.source, by: userName, destCamp: allocatedCamp });
+    notify("Requests", ["Management", "Sub-Manager"], `🩺 ${userName} requests ${f.qty} × ${f.item} from ${f.source}. Awaiting your approval.`);
+    setOpen(false); setF({ item: REQ_MEDS[0], qty: 1, source: "Main store" });
+  };
+  const lab = { fontSize: 12, color: t.textMuted, fontWeight: 600, marginBottom: 6, display: "block" };
+  const fld = { width: "100%", height: 44, borderRadius: 10, border: `1px solid ${t.border}`, background: t.surfaceAlt, color: t.text, fontSize: 14, padding: "0 12px", outline: "none", boxSizing: "border-box" };
+  return (<Page title="My requests" subtitle="Items you've requested. Submit a new one and track its approval status."
+    info="Request a medication from a camp/clinic or the main store. It goes to Management/Sub-management for approval. Once approved, the pharmacist at that source location is notified to fulfil it. Status updates here automatically."
+    action={<button onClick={() => setOpen(true)} style={btn(t)}><Plus size={15} /> New request</button>}>
+    {mine.length === 0
+      ? <div style={{ ...card(t), textAlign: "center", color: t.textMuted, fontSize: 13.5, padding: "30px 16px" }}>No requests yet. Tap “New request” to ask for an item from a camp, clinic, or the store.</div>
+      : <div style={{ display: "grid", gap: 10 }}>{mine.map((r) => { const s = { approved: { fg: t.success, bg: t.successSoft, l: "Approved" }, pending: { fg: t.warning, bg: t.warningSoft, l: "Pending" }, rejected: { fg: t.danger, bg: t.dangerSoft, l: "Rejected" }, sent: { fg: t.primary, bg: t.primarySoft, l: "In transit" }, received: { fg: t.success, bg: t.successSoft, l: "Received" } }[r.status] || { fg: t.textMuted, bg: t.surfaceAlt, l: r.status };
+        return (<div key={r.id} style={card(t)}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}><span style={{ fontSize: 14, fontWeight: 700 }}>{r.item}</span><span style={{ fontSize: 12, fontWeight: 700, color: s.fg, background: s.bg, padding: "4px 11px", borderRadius: 20 }}>{s.l}</span></div>
+          <div style={{ fontSize: 12.5, color: t.textMuted, marginTop: 7, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>{r.qty} units · from <strong style={{ color: t.text }}>{r.source}</strong></div>
+          <div style={{ fontSize: 11.5, color: t.textMuted, marginTop: 4 }}>{r.status === "pending" ? `Awaiting approval · ${r.time || ""}` : `Approved by ${r.actor || "management"}${r.decidedAt ? ` · ${r.decidedAt}` : ""}`}</div>
+          {r.status === "approved" && <div style={{ fontSize: 11.5, color: t.success, marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}><CheckCircle2 size={13} /> Pharmacist at {r.source} notified to fulfil.</div>}
+          {r.status === "sent" && <div style={{ fontSize: 11.5, color: t.primary, marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}><PackageCheck size={13} /> Dispatched from {r.source} — arriving at {r.destCamp}.</div>}
+          {r.status === "received" && <div style={{ fontSize: 11.5, color: t.success, marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}><Check size={13} /> Received at {r.destCamp} — complete.</div>}
+        </div>); })}</div>}
+    {open && <Modal title="New item request" icon={ArrowLeftRight} onClose={() => setOpen(false)}>
+      <label style={lab}>Medication</label>
+      <select value={f.item} onChange={(e) => setF({ ...f, item: e.target.value })} style={{ ...fld, marginBottom: 14 }}>{REQ_MEDS.map((m) => <option key={m} value={m}>{m}</option>)}</select>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 12, marginBottom: 14 }}>
+        <div><label style={lab}>Quantity</label><input type="number" min="1" value={f.qty} onChange={(e) => setF({ ...f, qty: e.target.value })} style={fld} /></div>
+        <div><label style={lab}>Request from</label><select value={f.source} onChange={(e) => setF({ ...f, source: e.target.value })} style={fld}>{sources.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+      </div>
+      <p style={{ fontSize: 12, color: t.textMuted, marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}><Info size={13} /> This goes to Management/Sub-management for approval. Once approved, the pharmacist at {f.source} is notified.</p>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}><button onClick={() => setOpen(false)} style={btn(t, "ghost")}>Cancel</button><button onClick={submit} style={btn(t)}><Send size={15} /> Submit request</button></div>
+    </Modal>}
   </Page>);
 }
 
@@ -2512,9 +2758,10 @@ function Shell({ role, dark, setDark, brand, setBrand, license, allocatedCamp, u
     case "users": return <UsersScreen canAllocate={role === "Management" || role === "Admin"} canViewProfiles={privileged} />;
     case "store": return <StoreGate canManageTeam={role === "Management" || role === "Sub-Manager" || role === "Admin"} userName={userName} />;
     case "storetasks": return <StoreTasks />;
+    case "storereqs": return <StoreRequests userName={userName} />;
     case "storereq": return <StoreRequest allocatedCamp={allocatedCamp} role={role} userName={userName} />;
     case "radar": return <RadarScreen />;
-    case "requests": return <MyRequests />;
+    case "requests": return <MyRequests userName={userName} allocatedCamp={allocatedCamp} />;
     case "inspect": return <Inspections role={role} allocatedCamp={allocatedCamp} notify={notify} />;
     case "zones": return <Zones />;
     case "notifs": return <Notifications role={role} />;
@@ -2598,12 +2845,21 @@ export default function App() {
   const setDispensed = (camp, code, qty) => setDispensedMap((p) => ({ ...p, [`${camp}|${code}`]: qty }));
   const [beginMap, setBeginMap] = useState({}); // `${camp}|${code}` -> beginning balance (set in inventory, shown in daily)
   const setBegin = (camp, code, qty) => setBeginMap((p) => ({ ...p, [`${camp}|${code}`]: qty }));
+  const [invAdj, setInvAdj] = useState({}); // `${camp}|${codeOrName}` -> { recv, mov } from confirmed medical-request stock actions
+  const adjustInv = (camp, key, field, delta) => setInvAdj((p) => { const k = `${camp}|${key}`; const cur = p[k] || { recv: 0, mov: 0 }; return { ...p, [k]: { ...cur, [field]: (cur[field] || 0) + delta } }; });
   const [posts, setPosts] = useState(HUB_SEED); // global hub — shared across all roles, live
   const [storeTeam, setStoreTeam] = useState(STORE_PHARM_SEED); // store roster — shared with Users screen
   const [users, setUsers] = useState(USER_SEED); // all staff — single source of truth (Users screen + store gate)
   const [storeTasks, setStoreTasks] = useState(STORE_TASKS_SEED); // store tasks — shared, Lead-assignable
+  const [medReqs, setMedReqs] = useState(MED_REQ_SEED); // medical/pharmacy item requests — shared chain: create → approve → notify source pharmacist
+  const addMedReq = (r) => setMedReqs((p) => [{ ...r, id: Date.now(), status: "pending", time: "Just now" }, ...p]);
+  const setMedReqStatus = (id, status, actor) => setMedReqs((p) => p.map((r) => r.id === id ? { ...r, status, actor: actor || r.actor, decidedAt: "Just now" } : r));
+  const patchMedReq = (id, patch) => setMedReqs((p) => p.map((r) => r.id === id ? { ...r, ...patch } : r));
+  const [storeReqs, setStoreReqs] = useState(STORE_REQ_SEED); // pharmacist→store requests (monthly/urgent), shared so the Store can fulfil
+  const addStoreReq = (r) => setStoreReqs((p) => [{ ...r, id: Date.now(), status: "pending", time: "Just now" }, ...p]);
+  const patchStoreReq = (id, patch) => setStoreReqs((p) => p.map((r) => r.id === id ? { ...r, ...patch } : r));
   const me = role ? { name: userName, role, camp: allocatedCamp, mil: USER_MIL[role] || "—" } : null;
-  const ctx = { camps, campZones, addCamp, removeCamp, setCampZone, ratings, setRating, notifs, notify, setNotifs, channels, setChannels, showRatings, setShowRatings, dispensedMap, setDispensed, beginMap, setBegin, posts, setPosts, me, storeTeam, setStoreTeam, users, setUsers, storeTasks, setStoreTasks };
+  const ctx = { camps, campZones, addCamp, removeCamp, setCampZone, ratings, setRating, notifs, notify, setNotifs, channels, setChannels, showRatings, setShowRatings, dispensedMap, setDispensed, beginMap, setBegin, invAdj, adjustInv, posts, setPosts, me, storeTeam, setStoreTeam, users, setUsers, storeTasks, setStoreTasks, medReqs, addMedReq, setMedReqStatus, patchMedReq, storeReqs, addStoreReq, patchStoreReq };
   return (
     <ThemeCtx.Provider value={t}>
       <AppCtx.Provider value={ctx}>
