@@ -795,7 +795,7 @@ function RecallModal({ item, onClose, onConfirm }) {
 /* ================= CONTROLLED-DRUG REGISTER (double-signature) ================= */
 const CD_SEED = [
   { id: 1, date: today(), drug: "Morphine sulfate 10mg", batch: "MOR-CD-77", txn: "Dispensed", qty: 2, balance: 78, patient: "A. Al-Sulaiti (QA-44821)", by: "Yaqeen", witness: "S. Hassan" },
-  { id: 2, date: today(), drug: "Morphine sulfate 10mg", batch: "MOR-CD-77", txn: "Received", qty: 50, balance: 80, patient: "—", by: "Yaqeen", witness: "Capt. A. Khalifa" },
+  { id: 2, date: today(), drug: "Morphine sulfate 10mg", batch: "MOR-CD-77", txn: "Received", qty: 50, balance: 80, patient: "—", by: "Yaqeen", witness: "Capt. Hassan Al-Kuwari" },
 ];
 const CD_TXN = ["Dispensed", "Received", "Wasted", "Returned"];
 function ControlledRegister({ allocatedCamp, userName, role }) {
@@ -1692,7 +1692,7 @@ function AdminReqModal({ initial, toAdmin, onClose, onSave }) {
 
 /* ================= USERS ================= */
 const USER_SEED = [
-  { id: 1, name: "Capt. A. Khalifa", role: "Admin", camp: "Doha HQ", license: "PH-10293", phone: "+974 5500 1122", status: "active" },
+  { id: 1, name: "Capt. Hassan Al-Kuwari", role: "Admin", camp: "Doha HQ", license: "PH-10293", phone: "+974 5500 1122", status: "active" },
   { id: 2, name: "M. Obaidly", role: "Management", camp: "Doha HQ", license: "PH-19002", phone: "+974 5500 2211", status: "active" },
   { id: 3, name: "Dalia & Asmaa", role: "Sub-Manager", camp: "Tariq Camp", license: "PH-20481", phone: "+974 5500 3344", status: "active" },
   { id: 4, name: "Shayma'a", role: "Inspector", camp: "Mid zone", license: "PH-41200", phone: "+974 5500 4040", status: "active" },
@@ -1830,7 +1830,7 @@ const STORE_INCOMING_SEED = [
   { id: 1, type: "Urgent", item: "Insulin Glargine", qty: 30, to: "Al-Rayyan Field Clinic", by: "💊 Yaqeen", status: "new", notes: [] },
   { id: 2, type: "Monthly demand", item: "Augmentin 1000mg", qty: 2000, to: "Tariq Camp", by: "📋 Dalia & Asmaa", status: "forwarded", notes: ["Forwarded to 🏛️ management & 📋 Sub-Manager"] },
   { id: 3, type: "Request", item: "Paracetamol 500mg", qty: 500, to: "Doha HQ", by: "💊 S. Hassan", status: "approved", notes: ["Forwarded for approval", "Approved by 🏛️ management"] },
-  { id: 4, type: "Request", item: "Ceftriaxone 1g", qty: 300, to: "Al-Udeid Clinic", by: "💊 A. Khalifa", status: "dispatched", notes: ["Approved by 📋 Sub-Manager", "Dispatched by store"] },
+  { id: 4, type: "Request", item: "Ceftriaxone 1g", qty: 300, to: "Al-Udeid Clinic", by: "💊 Hassan Al-Kuwari", status: "dispatched", notes: ["Approved by 📋 Sub-Manager", "Dispatched by store"] },
 ];
 const STORE_TASKS_SEED = [
   { id: 1, title: "Count carton stock for Augmentin 1000mg", assignedBy: "Store lead", assignee: "H. Nasser", due: "Today", done: false },
@@ -2803,7 +2803,7 @@ function Shell({ role, dark, setDark, brand, setBrand, license, allocatedCamp, u
 
 /* ================= ROOT ================= */
 const ALLOCATED = { Pharmacist: "Al-Udeid Clinic", Medical: "Al-Rayyan Field Clinic", "Sub-Manager": "Tariq Camp", Store: "Doha HQ", Admin: "Doha HQ", Management: "Doha HQ", Inspector: "Mid zone" };
-const USER_NAMES = { Pharmacist: "Yaqeen", Medical: "Dr. Al-Thani", "Sub-Manager": "Dalia & Asmaa", Store: "Nawras", Admin: "Capt. A. Khalifa", Management: "M. Obaidly", Inspector: "Shayma'a" };
+const USER_NAMES = { Pharmacist: "Yaqeen", Medical: "Dr. Al-Thani", "Sub-Manager": "Dalia & Asmaa", Store: "Nawras", Admin: "Capt. Hassan Al-Kuwari", Management: "M. Obaidly", Inspector: "Shayma'a" };
 const USER_MIL = { Pharmacist: "QA-50231", Medical: "QA-44120", "Sub-Manager": "QA-33891", Store: "QA-61740", Admin: "QA-10002", Management: "QA-20015", Inspector: "QA-47783" };
 function expiryInDays(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 const NOTIF_SEED = [
