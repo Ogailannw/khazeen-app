@@ -9,7 +9,7 @@ import {
   ThumbsUp, ThumbsDown, Warehouse, PackagePlus, Flag, Star, FileText,
   ClipboardList, Link2, Settings, ScanSearch, Compass, UserCircle, Upload,
   Image, Pin, Camera, Clock, Phone, Mail,
-  Smartphone, CreditCard, ShieldCheck, StickyNote, BellOff, Stethoscope, RotateCcw, HeartPulse, Share2, Download, User, Eye, EyeOff, MessageCircle, Menu, PackageCheck,
+  Smartphone, CreditCard, ShieldCheck, StickyNote, BellOff, Stethoscope, RotateCcw, HeartPulse, Share2, Download, User, Eye, EyeOff, MessageCircle, Menu, PackageCheck, UserCheck,
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -73,7 +73,7 @@ const NAV = {
 const NAV_BY_ROLE = {
   Admin: ["home", "hub", "dashboard", "findme", "clinical", "cpd", "tasks", "approvals", "inspect", "zones", "users", "store", "notifs", "settings"],
   Management: ["home", "hub", "dashboard", "findme", "logs", "clinical", "cpd", "tasks", "approvals", "controlled", "inspect", "zones", "users", "store", "notifs"],
-  "Sub-Manager": ["home", "hub", "dashboard", "findme", "logs", "clinical", "cpd", "tasks", "approvals", "controlled", "inspect", "zones", "storereq", "notifs"],
+  "Sub-Manager": ["home", "hub", "dashboard", "findme", "logs", "clinical", "cpd", "tasks", "approvals", "controlled", "inspect", "zones", "users", "notifs"],
   Inspector: ["home", "hub", "inspect", "findme", "clinical", "cpd", "tasks", "notifs"],
   Pharmacist: ["home", "hub", "dashboard", "logs", "coldchain", "recall", "controlled", "handover", "clinical", "cpd", "tasks", "storereq", "notifs"],
   Medical: ["home", "hub", "logs", "radar", "requests", "clinical", "cpd", "tasks", "notifs"],
@@ -1604,13 +1604,36 @@ const MYTASK_SEED = [
   { id: 3, freq: "monthly", title: "Reconcile near-expiry shelf", note: "1st of month", done: false },
   { id: 4, freq: "quarterly", title: "Tidy controlled-drug register", note: "", done: false },
 ];
-function MyTasks() {
+const ASSIGNED_TASK_SEED = [
+  { id: 7001, title: "Complete monthly narcotics reconciliation", detail: "Cross-check the controlled register against physical count.", due: "End of week", assignee: "Yaqeen", assigneeRole: "Pharmacist", by: "M. Obaidly", done: false },
+  { id: 7002, title: "Update cold-chain temperature log", detail: "Twice-daily fridge readings for insulin storage.", due: "Today", assignee: "Nawras", assigneeRole: "Store", by: "Dalia & Asmaa", done: true },
+];
+function MyTasks({ role, userName }) {
   const t = useT(); const [tasks, setTasks] = useState(MYTASK_SEED); const [modal, setModal] = useState(null);
+  const { assignedTasks, assignTask, toggleAssigned, removeAssigned, notify, users } = useApp();
+  const canAssign = role === "Management" || role === "Sub-Manager" || role === "Admin";
+  const [assignModal, setAssignModal] = useState(false);
+  const forMe = (assignedTasks || []).filter((x) => x.assignee === userName || x.assigneeRole === role);
+  const byMe = (assignedTasks || []).filter((x) => x.by === userName);
   const toggle = (id) => setTasks((p) => p.map((x) => x.id === id ? { ...x, done: !x.done } : x));
   const save = (task) => { if (task.id) setTasks((p) => p.map((x) => x.id === task.id ? task : x)); else setTasks((p) => [...p, { ...task, id: Date.now(), done: false }]); setModal(null); };
-  return (<Page title="My tasks" subtitle="Your own to-do list — write what you want to get done and tick it off when complete."
-    info="These tasks are private to you. Add anything you need to remember, organised as daily, monthly or quarterly, and check it off when done."
-    action={<button onClick={() => setModal({})} style={btn(t)}><Plus size={15} /> Add task</button>}>
+  return (<Page title="My tasks" subtitle="Your own to-do list, plus any tasks assigned to you."
+    info="Your personal tasks are private. Tasks assigned to you by management appear at the top. Management/Sub-management can delegate tasks to any staff member."
+    action={<>{canAssign && <button onClick={() => setAssignModal(true)} style={btn(t)}><Send size={15} /> Assign task</button>}<button onClick={() => setModal({})} style={btn(t, canAssign ? "ghost" : "primary")}><Plus size={15} /> Add task</button></>}>
+    {forMe.length > 0 && <div style={{ ...card(t), marginBottom: 16, borderLeft: `4px solid ${t.accent}` }}>
+      <div style={{ ...ttl(t), marginBottom: 12 }}><UserCheck size={16} color={t.accent} /> Assigned to you</div>
+      <div style={{ display: "grid", gap: 9 }}>{forMe.map((task) => (<div key={task.id} style={{ padding: "11px 12px", borderRadius: 10, background: t.surfaceAlt, border: `1px solid ${t.border}`, display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <button onClick={() => toggleAssigned(task.id)} aria-label="Done" style={{ width: 22, height: 22, borderRadius: "50%", flexShrink: 0, cursor: "pointer", marginTop: 1, border: `1.5px solid ${task.done ? t.success : t.border}`, background: task.done ? t.success : "transparent", display: "grid", placeItems: "center" }}>{task.done && <Check size={14} color="#fff" />}</button>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, textDecoration: task.done ? "line-through" : "none", color: task.done ? t.textMuted : t.text }}>{task.title}</div>{task.detail && <div style={{ fontSize: 12, color: t.textMuted, marginTop: 3 }}>{task.detail}</div>}<div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>{task.due && <span style={pill(t)}><CalendarClock size={11} /> {task.due}</span>}<span style={{ ...pill(t), color: t.accent }}>from {task.by}</span></div></div>
+      </div>))}</div>
+    </div>}
+    {canAssign && byMe.length > 0 && <div style={{ ...card(t), marginBottom: 16 }}>
+      <div style={{ ...ttl(t), marginBottom: 12 }}><Send size={16} color={t.primary} /> Tasks you assigned</div>
+      <div style={{ display: "grid", gap: 9 }}>{byMe.map((task) => (<div key={task.id} style={{ padding: "11px 12px", borderRadius: 10, background: t.surfaceAlt, border: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 600, textDecoration: task.done ? "line-through" : "none", color: task.done ? t.textMuted : t.text }}>{task.title}</div><div style={{ fontSize: 11.5, color: t.textMuted, marginTop: 3 }}>to {task.assignee} ({task.assigneeRole}){task.due ? ` · ${task.due}` : ""}</div></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 11.5, fontWeight: 700, color: task.done ? t.success : t.warning, background: task.done ? t.successSoft : t.warningSoft, padding: "3px 10px", borderRadius: 12 }}>{task.done ? "Done" : "Open"}</span><button onClick={() => removeAssigned(task.id)} aria-label="Remove" style={miniBtn(t)}><Trash2 size={12} color={t.danger} /></button></div>
+      </div>))}</div>
+    </div>}
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(270px, 1fr))", gap: 16 }}>
       {Object.entries(FREQ).map(([key, meta]) => { const list = tasks.filter((x) => x.freq === key); const Icon = meta.icon;
         return (<div key={key} style={card(t)}>
@@ -1628,7 +1651,28 @@ function MyTasks() {
         </div>); })}
     </div>
     {modal && <MyTaskModal initial={modal} onClose={() => setModal(null)} onSave={save} />}
+    {assignModal && <AssignTaskModal users={users} userName={userName} onClose={() => setAssignModal(false)} onSave={(tk) => { assignTask({ ...tk, by: userName }); notify("Tasks", [tk.assigneeRole], `📋 New task assigned to you by ${userName}: "${tk.title}"${tk.due ? ` (due ${tk.due})` : ""}.`); setAssignModal(false); }} />}
   </Page>);
+}
+function AssignTaskModal({ users, userName, onClose, onSave }) {
+  const t = useT();
+  const staff = (users || []).filter((u) => u.status === "active" && u.role !== "Admin");
+  const [f, setF] = useState({ assignId: staff[0] ? String(staff[0].id) : "", title: "", detail: "", due: "" });
+  const lab = { fontSize: 12, color: t.textMuted, fontWeight: 600, marginBottom: 5, display: "block" };
+  const fld = { width: "100%", height: 44, borderRadius: 10, border: `1px solid ${t.border}`, background: t.surfaceAlt, color: t.text, fontSize: 14, padding: "0 12px", outline: "none", boxSizing: "border-box" };
+  const pick = staff.find((u) => String(u.id) === f.assignId);
+  const submit = () => { if (!pick || !f.title.trim()) return; onSave({ title: f.title.trim(), detail: f.detail.trim(), due: f.due.trim(), assignee: pick.name, assigneeRole: pick.role }); };
+  return (<Modal title="Assign a task" icon={Send} onClose={onClose}>
+    <label style={lab}>Assign to</label>
+    <select value={f.assignId} onChange={(e) => setF({ ...f, assignId: e.target.value })} style={{ ...fld, marginBottom: 14 }}>{staff.map((u) => <option key={u.id} value={u.id}>{u.name} — {u.role === "Medical" ? (u.profession || "Medical") : u.role} ({u.camp})</option>)}</select>
+    <label style={lab}>Task title</label>
+    <input value={f.title} autoFocus onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="e.g. Complete monthly stock count" style={{ ...fld, marginBottom: 14 }} />
+    <label style={lab}>Details (optional)</label>
+    <textarea value={f.detail} onChange={(e) => setF({ ...f, detail: e.target.value })} rows={3} placeholder="Any instructions…" style={{ ...fld, height: "auto", padding: 12, marginBottom: 14, resize: "vertical", fontFamily: "inherit" }} />
+    <label style={lab}>Due (optional)</label>
+    <input value={f.due} onChange={(e) => setF({ ...f, due: e.target.value })} placeholder="e.g. Today, End of week, 15 Jul" style={{ ...fld, marginBottom: 18 }} />
+    <button onClick={submit} disabled={!pick || !f.title.trim()} style={{ ...btn(t), width: "100%", height: 46, justifyContent: "center", opacity: (!pick || !f.title.trim()) ? 0.5 : 1 }}><Send size={16} /> Assign task</button>
+  </Modal>);
 }
 function MyTaskModal({ initial, onClose, onSave }) {
   const t = useT(); const [f, setF] = useState({ id: initial.id, freq: initial.freq || "daily", title: initial.title || "", note: initial.note || "", time: initial.time || "", notify: initial.notify || false, done: initial.done || false }); const v = f.title.trim();
@@ -1795,20 +1839,34 @@ const USER_SEED = [
   { id: 7, name: "Nawras", role: "Pharmacist", camp: "Store", storeRole: "Store Lead", license: "ST-70021", phone: "+974 5501 6677", status: "active" },
   { id: 8, name: "H. Nasser", role: "Pharmacist", camp: "Store", storeRole: "Store Pharmacist", license: "ST-70044", phone: "+974 5501 7788", status: "active" },
 ];
-function UsersScreen({ canAllocate, canViewProfiles }) {
+function UsersScreen({ canAllocate, canApproveUsers, adderRole, canViewProfiles }) {
   const t = useT(); const { camps, campZones, addCamp, removeCamp, notify, users, setUsers } = useApp(); const [campModal, setCampModal] = useState(false); const [viewing, setViewing] = useState(null); const [editing, setEditing] = useState(null); const [adding, setAdding] = useState(false);
   const toggle = (id) => setUsers((p) => p.map((u) => u.id === id ? { ...u, status: u.status === "active" ? "disconnected" : "active" } : u));
   const setCamp = (id, camp) => setUsers((p) => p.map((u) => { if (u.id !== id) return u;
     if (camp === "Store") { notify("Store", ["Pharmacist"], `📍 ${u.name}'s location changed to the Main store (Store Pharmacist). They now appear in the store team and sign-in.`); return { ...u, camp, storeRole: u.storeRole || "Store Pharmacist" }; }
     notify("Camp change", [u.role], `📍 ${u.name} re-allocated to ${camp}.${u.camp === "Store" ? " Removed from the Main store." : ""} Previous records remain on the site for the next staff.`); return { ...u, camp, storeRole: undefined }; }));
   const saveEdit = (next) => { setUsers((p) => p.map((u) => u.id === next.id ? next : u)); notify("Camp change", [next.role], `📱 SMS sent to ${next.phone}: your profile details were updated by an administrator (name, license or contact). The change now applies across Khazeen.`); setEditing(null); };
-  const addUser = (u) => { const nu = { ...u, id: Date.now(), status: "active" }; setUsers((p) => [...p, nu]); notify("Camp change", [u.role], `New ${u.role}${u.profession ? ` (${u.profession})` : ""} account created: ${u.name}, allocated to ${u.camp}.`); setAdding(false); };
+  const addUser = (u) => { const pending = adderRole === "Sub-Manager"; const nu = { ...u, id: Date.now(), status: pending ? "pending" : "active", addedBy: adderRole }; setUsers((p) => [...p, nu]);
+    if (pending) notify("Users", ["Management"], `🕒 New ${u.role} "${u.name}" (${u.camp}) added by Sub-management — awaiting your approval.`);
+    else notify("Camp change", [u.role], `New ${u.role}${u.profession ? ` (${u.profession})` : ""} account created: ${u.name}, allocated to ${u.camp}.`);
+    setAdding(false); };
+  const approveUser = (id) => setUsers((p) => p.map((u) => { if (u.id !== id) return u; notify("Camp change", [u.role], `Your ${u.role} account (${u.name}, ${u.camp}) was approved and is now active.`); return { ...u, status: "active" }; }));
+  const rejectUser = (id) => setUsers((p) => p.filter((u) => u.id !== id));
+  const pendingUsers = users.filter((u) => u.status === "pending");
   const roleLabel = (u) => u.role === "Medical" ? (u.profession || "Medical") : u.role;
   const th = { padding: "11px 12px", fontSize: 11.5, fontWeight: 600, color: "#C6D6E8", textAlign: "left", borderBottom: `1px solid ${t.border}` };
   const td = { padding: "10px 12px", fontSize: 13, textAlign: "left", borderBottom: `1px solid ${t.border}` };
   return (<Page title="Users" subtitle={canAllocate ? "Add roles, allocate users to camps, and manage access." : "Staff directory."}
     info="Management/Admin/Sub-Manager add roles (Store, Pharmacist or Medical — Medical also carries a profession such as Doctor or Nurse), allocate users to a camp/clinic, and connect or disconnect access. Re-allocating notifies the user — records stay on the camp/store so the next allocated user continues the workflow."
     action={<><ExportButton title="Users directory" build={() => ({ bodyHTML: `<table><thead><tr><th>Name</th><th>Role</th><th>Camp/clinic</th><th>License</th><th>Access</th></tr></thead><tbody>${users.map((u) => `<tr><td>${escapeHTML(u.name)}</td><td>${escapeHTML(roleLabel(u))}${u.role === "Medical" ? " (Medical viewer)" : ""}</td><td>${escapeHTML(u.camp)}</td><td>${escapeHTML(u.license)}</td><td>${u.status === "active" ? "Connected" : "Disconnected"}</td></tr>`).join("")}</tbody></table>`, text: `${users.length} user(s).` })} />{canAllocate && <button onClick={() => setCampModal(true)} style={btn(t, "ghost")}><Building2 size={15} /> Manage camps</button>}{canAllocate && <button onClick={() => setAdding(true)} style={btn(t)}><Plus size={15} /> Add role</button>}</>}>
+    {canApproveUsers && pendingUsers.length > 0 && <div style={{ marginBottom: 16, background: t.surface, border: `1px solid ${t.warning}`, borderRadius: 14, padding: 16 }}>
+      <div style={{ ...ttl(t), marginBottom: 10 }}><Clock size={16} color={t.warning} /> Pending approval — added by Sub-management ({pendingUsers.length})</div>
+      <div style={{ display: "grid", gap: 8 }}>{pendingUsers.map((u) => (<div key={u.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", background: t.surfaceAlt, borderRadius: 10, padding: "10px 12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}><RoleGlyph role={u.role} size={30} /><div><div style={{ fontSize: 13.5, fontWeight: 700 }}>{u.name}</div><div style={{ fontSize: 11.5, color: t.textMuted }}>{roleLabel(u)} · {u.camp} · {u.license || "no license"}</div></div></div>
+        <div style={{ display: "flex", gap: 8 }}><button onClick={() => approveUser(u.id)} style={{ ...btn(t), height: 34, fontSize: 12.5 }}><Check size={14} /> Approve</button><button onClick={() => rejectUser(u.id)} style={{ ...btn(t, "ghost"), height: 34, fontSize: 12.5, color: t.danger, borderColor: t.danger + "55" }}><X size={14} /> Reject</button></div>
+      </div>))}</div>
+    </div>}
+    {adderRole === "Sub-Manager" && pendingUsers.length > 0 && <div style={{ marginBottom: 16, background: t.warningSoft, borderRadius: 12, padding: "10px 14px", fontSize: 12.5, color: t.warning, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}><Clock size={14} /> {pendingUsers.length} user(s) you added are awaiting Management approval before they go active.</div>}
     <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 14, overflow: "hidden" }}><div style={{ overflowX: "auto" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 880 }}>
         <thead><tr style={{ background: t.head }}><th style={th}>Name</th><th style={{ ...th, textAlign: "center" }}>Profile</th><th style={th}>Role</th><th style={th}>Camp / clinic</th><th style={th}>Zone</th><th style={th}>License</th><th style={{ ...th, textAlign: "right" }}>Access</th>{canViewProfiles && <th style={{ ...th, textAlign: "right" }}></th>}</tr></thead>
@@ -1821,7 +1879,7 @@ function UsersScreen({ canAllocate, canViewProfiles }) {
             <td style={td}>{canAllocate && u.role !== "Inspector" ? <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><select value={u.camp} onChange={(e) => setCamp(u.id, e.target.value)} style={{ height: 30, borderRadius: 7, fontSize: 12.5, border: `1px solid ${t.border}`, background: t.input, color: t.text, padding: "0 6px", fontWeight: 600 }}>{camps.map((c) => <option key={c}>{c}</option>)}{u.role === "Pharmacist" && <option value="Store">Store</option>}</select>{u.camp === "Store" && u.storeRole && <span style={{ fontSize: 10, fontWeight: 700, color: u.storeRole === "Store Lead" ? t.primary : t.accent, background: t.primarySoft, padding: "2px 7px", borderRadius: 12, whiteSpace: "nowrap" }}>{u.storeRole === "Store Lead" ? "Lead" : "Pharm"}</span>}</span> : <span style={{ color: t.textMuted, display: "inline-flex", alignItems: "center", gap: 5 }}>{u.camp === "Store" && <Warehouse size={12} />}{u.camp}</span>}</td>
             <td style={{ ...td, color: t.textMuted, fontSize: 12 }}>{u.camp === "Store" ? "Main store" : (campZones[u.camp] || (u.camp.includes("zone") ? u.camp.replace(" zone", "") : "—"))}</td>
             <td style={{ ...td, fontFamily: "monospace", fontSize: 12 }}>{u.license}</td>
-            <td style={{ ...td, textAlign: "right" }}><button onClick={() => canAllocate && toggle(u.id)} disabled={!canAllocate} style={{ fontSize: 12, fontWeight: 700, cursor: canAllocate ? "pointer" : "default", border: "none", borderRadius: 20, padding: "4px 12px", color: u.status === "active" ? t.success : t.danger, background: u.status === "active" ? t.successSoft : t.dangerSoft }}>{u.status === "active" ? "Connected" : "Disconnected"}</button></td>
+            <td style={{ ...td, textAlign: "right" }}>{u.status === "pending" ? <span style={{ fontSize: 12, fontWeight: 700, borderRadius: 20, padding: "4px 12px", color: t.warning, background: t.warningSoft }}>Pending</span> : <button onClick={() => canAllocate && toggle(u.id)} disabled={!canAllocate} style={{ fontSize: 12, fontWeight: 700, cursor: canAllocate ? "pointer" : "default", border: "none", borderRadius: 20, padding: "4px 12px", color: u.status === "active" ? t.success : t.danger, background: u.status === "active" ? t.successSoft : t.dangerSoft }}>{u.status === "active" ? "Connected" : "Disconnected"}</button>}</td>
             {canViewProfiles && <td style={{ ...td, textAlign: "right" }}><button onClick={() => setViewing(u)} style={{ ...btn(t, "ghost"), height: 30, fontSize: 12 }}><UserCircle size={13} /> Profile</button></td>}
           </tr>);
           const rank = (u) => {
@@ -2878,9 +2936,9 @@ function Shell({ role, dark, setDark, brand, setBrand, license, allocatedCamp, u
     case "coldchain": return <ColdChain canEdit={role === "Admin" || role === "Pharmacist"} allocatedCamp={allocatedCamp} />;
     case "clinical": return <Clinical role={role} />;
     case "cpd": return <CPD role={role} license={license} cpdLink={brand.cpdLink} />;
-    case "tasks": return <MyTasks />;
+    case "tasks": return <MyTasks role={role} userName={userName} />;
     case "approvals": return <Approvals role={role} />;
-    case "users": return <UsersScreen canAllocate={role === "Management" || role === "Admin"} canViewProfiles={privileged} />;
+    case "users": return <UsersScreen canAllocate={role === "Management" || role === "Admin" || role === "Sub-Manager"} canApproveUsers={role === "Management" || role === "Admin"} adderRole={role} canViewProfiles={privileged} />;
     case "store": return <StoreGate canManageTeam={role === "Management" || role === "Sub-Manager" || role === "Admin"} userName={userName} />;
     case "storetasks": return <StoreTasks />;
     case "storereqs": return <StoreRequests userName={userName} />;
@@ -2976,6 +3034,10 @@ export default function App() {
   const [storeTeam, setStoreTeam] = useState(STORE_PHARM_SEED); // store roster — shared with Users screen
   const [users, setUsers] = useState(USER_SEED); // all staff — single source of truth (Users screen + store gate)
   const [storeTasks, setStoreTasks] = useState(STORE_TASKS_SEED); // store tasks — shared, Lead-assignable
+  const [assignedTasks, setAssignedTasks] = useState(ASSIGNED_TASK_SEED); // delegated tasks: { id, title, detail, due, assignee, assigneeRole, by, done }
+  const assignTask = (tk) => setAssignedTasks((p) => [{ ...tk, id: Date.now(), done: false }, ...p]);
+  const toggleAssigned = (id) => setAssignedTasks((p) => p.map((x) => x.id === id ? { ...x, done: !x.done } : x));
+  const removeAssigned = (id) => setAssignedTasks((p) => p.filter((x) => x.id !== id));
   const [medReqs, setMedReqs] = useState(MED_REQ_SEED); // medical/pharmacy item requests — shared chain: create → approve → notify source pharmacist
   const addMedReq = (r) => setMedReqs((p) => [{ ...r, id: Date.now(), stage: r.source === "Main store" ? "source_confirm" : "source_confirm", time: "Just now" }, ...p]);
   const setMedReqStatus = (id, status, actor) => setMedReqs((p) => p.map((r) => r.id === id ? { ...r, status, actor: actor || r.actor, decidedAt: "Just now" } : r));
@@ -2986,7 +3048,7 @@ export default function App() {
   const addStoreReq = (r) => setStoreReqs((p) => [{ ...r, id: Date.now(), stage: "mgmt_approve", time: "Just now" }, ...p]);
   const patchStoreReq = (id, patch) => setStoreReqs((p) => p.map((r) => r.id === id ? { ...r, ...patch } : r));
   const me = role ? { name: userName, role, camp: allocatedCamp, mil: USER_MIL[role] || "—" } : null;
-  const ctx = { camps, campZones, addCamp, removeCamp, setCampZone, ratings, setRating, notifs, notify, setNotifs, channels, setChannels, showRatings, setShowRatings, dispensedMap, setDispensed, beginMap, setBegin, invAdj, adjustInv, posts, setPosts, me, storeTeam, setStoreTeam, users, setUsers, storeTasks, setStoreTasks, medReqs, addMedReq, setMedReqStatus, patchMedReq, storeReqs, addStoreReq, patchStoreReq, archive, addArchive };
+  const ctx = { camps, campZones, addCamp, removeCamp, setCampZone, ratings, setRating, notifs, notify, setNotifs, channels, setChannels, showRatings, setShowRatings, dispensedMap, setDispensed, beginMap, setBegin, invAdj, adjustInv, posts, setPosts, me, storeTeam, setStoreTeam, users, setUsers, storeTasks, setStoreTasks, medReqs, addMedReq, setMedReqStatus, patchMedReq, storeReqs, addStoreReq, patchStoreReq, archive, addArchive, assignedTasks, assignTask, toggleAssigned, removeAssigned };
   return (
     <ThemeCtx.Provider value={t}>
       <AppCtx.Provider value={ctx}>
